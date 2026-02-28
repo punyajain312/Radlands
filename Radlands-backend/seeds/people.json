@@ -1,0 +1,18 @@
+[
+  {
+    "id": 101,
+    "name": "Test Person",
+    "type": "person",
+    "cost": 1,
+    "health": 1,
+    "count": 20,
+
+    "ability": [],
+    "junk_ability": null,
+    "on_play": null,
+    "passive": [],
+    "event_effect": null,
+    "bomb_number": null,
+    "initial_draw": null
+  }
+]

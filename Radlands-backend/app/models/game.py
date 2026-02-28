@@ -12,7 +12,13 @@ class Game(Base):
     player2_id = Column(Integer, ForeignKey("players.id"), nullable=False)
 
     status = Column(String, default="waiting")  # waiting / active / finished
+    
+    # Turn management
+    start_player_id = Column(Integer, ForeignKey("players.id"), nullable=True)
     current_turn_player_id = Column(Integer, ForeignKey("players.id"), nullable=True)
+    turn_number = Column(Integer, default=1)
+    
+    # Game result
     winner_id = Column(Integer, ForeignKey("players.id"), nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -1,0 +1,175 @@
+[
+    {
+        "id": 307,
+        "name": "Nest of Spies",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 1,
+                "condition": {
+                    "type": "people_played_this_turn",
+                    "operator": ">=",
+                    "value": 2
+                },
+                "effect": {
+                    "type": "damage",
+                    "target": "unprotected",
+                    "amount": 1
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 1
+    },
+    {
+        "id": 308,
+        "name": "Blood Bank",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 0,
+                "effect": {
+                    "type": "sequence",
+                    "steps": [
+                        {
+                            "type": "destroy",
+                            "target": "one_of_your_people"
+                        },
+                        {
+                            "type": "gain_water",
+                            "amount": 1
+                        }
+                    ]
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 1
+    },
+    {
+        "id": 309,
+        "name": "Pillbox",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 3,
+                "cost_modifier": {
+                    "type": "per_destroyed_camp_you_have",
+                    "reduction": 1
+                },
+                "effect": {
+                    "type": "damage",
+                    "target": "unprotected",
+                    "amount": 1
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 1
+    },
+    {
+        "id": 311,
+        "name": "Reactor",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 2,
+                "effect": {
+                    "type": "sequence",
+                    "steps": [
+                        {
+                            "type": "destroy",
+                            "target": "self"
+                        },
+                        {
+                            "type": "destroy",
+                            "target": "all_people"
+                        }
+                    ]
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 1
+    },
+    {
+        "id": 312,
+        "name": "Cannon",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 1,
+                "effect": {
+                    "type": "sequence",
+                    "steps": [
+                        {
+                            "type": "damage",
+                            "target": "self",
+                            "amount": 1
+                        },
+                        {
+                            "type": "damage",
+                            "target": "unprotected",
+                            "amount": 1
+                        }
+                    ]
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 1
+    },
+    {
+        "id": 313,
+        "name": "Railgun",
+        "type": "camp",
+        "count": 0,
+        "ability": [
+            {
+                "type": "activated",
+                "cost": 2,
+                "effect": {
+                    "type": "damage",
+                    "target": "unprotected",
+                    "amount": 2
+                }
+            }
+        ],
+        "junk_ability": null,
+        "on_play": null,
+        "passive": [],
+        "event_effect": null,
+        "bomb_number": null,
+        "initial_draw": 0
+    }
+]
