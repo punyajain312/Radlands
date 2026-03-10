@@ -7,7 +7,18 @@
     "health": 1,
     "count": 20,
 
-    "ability": [],
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": {
+          "type": "damage",
+          "amount": 1,
+          "target_required": true
+        }
+      }
+    ],
+
     "junk_ability": null,
     "on_play": null,
     "passive": [],
