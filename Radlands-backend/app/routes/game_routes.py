@@ -1,28 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException
-from enum import Enum
-from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import flag_modified
+from sqlalchemy.orm import Session # type: ignore
+from sqlalchemy.orm.attributes import flag_modified # type: ignore
 from app.db.dependencies import get_db
 from app.models.game import Game
+from app.models.player import Player
 from app.models.game_state import GameState
 from app.models.card import Card
-from pydantic import BaseModel
-from app.core.game_initializer import initialize_game_state
+from app.core.game_initializer import initialize_game_state, draw_card, check_game_end
 from app.core.effect_engine import execute_effect
+from app.schemas.game import CreateGameRequest, EndTurnRequest, PlayPersonRequest, ActivateAbilityRequest
 
 router = APIRouter()
 
 # Create game
-class CreateGameRequest(BaseModel):
-    player1_id: int
-    player2_id: int
-
-
 @router.post("/games/create")
 def create_game(request: CreateGameRequest, db: Session = Depends(get_db)):
+
+    player1 = db.query(Player).filter(Player.id == request.player1_id).first()
+    player2 = db.query(Player).filter(Player.id == request.player2_id).first()
+
+    if not player1 or not player2:
+        raise HTTPException(status_code=400, detail="Player not found")
+
+    if player1.id == player2.id:
+        raise HTTPException(status_code=400, detail="Players must be different")
+
     game = Game(
-        player1_id=request.player1_id,
-        player2_id=request.player2_id,
+        player1_id=player1.id,
+        player2_id=player2.id,
         status="initializing"
     )
 
@@ -63,26 +68,29 @@ def get_game(game_id: int, db: Session = Depends(get_db)):
 
 
 # End Turn
-class EndTurnRequest(BaseModel):
-    player_id: int
-
-
-@router.post("/games/{game_id}/end-turn")
+@router.post("/games/end-turn/{game_id}")
 def end_turn(
     game_id: int,
     request: EndTurnRequest,
     db: Session = Depends(get_db)
 ):
+    # Fetch game
     game = db.query(Game).filter(Game.id == game_id).first()
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
 
+    # Prevent actions on finished game
+    if game.status == "finished":
+        raise HTTPException(status_code=400, detail="Game already finished")
+
     if game.status != "active":
         raise HTTPException(status_code=400, detail="Game not active")
 
+    # Turn validation
     if game.current_turn_player_id != request.player_id:
         raise HTTPException(status_code=403, detail="Not your turn")
 
+    # Fetch game state
     game_state = db.query(GameState).filter(GameState.game_id == game_id).first()
     if not game_state:
         raise HTTPException(status_code=404, detail="Game state not found")
@@ -90,9 +98,11 @@ def end_turn(
     state = game_state.state_json
     current_player_id = request.player_id
 
+    # End current player's turn
     state["players"][str(current_player_id)]["water"] = 0
     state["turn_context"]["people_played_this_turn"] = 0
 
+    # Determine next player
     next_player_id = (
         game.player2_id
         if current_player_id == game.player1_id
@@ -102,14 +112,36 @@ def end_turn(
     game.current_turn_player_id = next_player_id
     game.turn_number += 1
 
-    # Replenish Water
-    state["players"][str(next_player_id)]["water"] = 3
+    next_player = state["players"][str(next_player_id)]
 
-    # Ready all people of next player
-    for column in state["players"][str(next_player_id)]["columns"]:
+    # DRAW CARD (start of turn)
+    draw_result = draw_card(next_player)
+
+    # Handle deck exhaustion → DRAW GAME
+    if draw_result == "DRAW":
+        game.status = "finished"
+        game.winner_id = None
+
+        game_state.state_json = state
+        flag_modified(game_state, "state_json")
+        db.commit()
+
+        return {
+            "message": "Game ended in draw (deck exhausted twice)",
+            "game_over": True,
+            "draw": True,
+            "state": state
+        }
+
+    # GAIN WATER
+    next_player["water"] = 3
+
+    # READY ALL PEOPLE
+    for column in next_player["columns"]:
         for person in column:
             person["ready"] = True
 
+    # Persist state
     game_state.state_json = state
     flag_modified(game_state, "state_json")
     db.commit()
@@ -122,13 +154,7 @@ def end_turn(
     }
 
 # Play a Card
-class PlayPersonRequest(BaseModel):
-    player_id: int
-    card_id: int
-    column_index: int
-
-
-@router.post("/games/{game_id}/play-person")
+@router.post("/games/play-person/{game_id}")
 def play_person(
     game_id: int,
     request: PlayPersonRequest,
@@ -165,6 +191,7 @@ def play_person(
         raise HTTPException(status_code=400, detail="Column already has 2 people")
 
     player["water"] -= card.cost
+    
     player["hand"].remove(request.card_id)
 
     player["columns"][request.column_index].append({
@@ -184,29 +211,8 @@ def play_person(
         "state": state
     }
 
-class TargetType(str, Enum):
-    person = "person"
-    camp = "camp"
-
-class TargetSide(str, Enum):
-    self = "self"
-    opponent = "opponent"
-
-
-class ActivateAbilityRequest(BaseModel):
-    player_id: int
-    column_index: int
-    position_index: int
-
-    target_type: TargetType
-    target_side: TargetSide
-
-    target_column: int | None = None
-    target_position: int | None = None
-    target_camp_index: int | None = None
-
-
-@router.post("/games/{game_id}/activate-ability")
+# Activate Ability
+@router.post("/games/activate-ability/{game_id}")
 def activate_ability(
     game_id: int,
     request: ActivateAbilityRequest,
@@ -216,6 +222,10 @@ def activate_ability(
     game = db.query(Game).filter(Game.id == game_id).first()
     if not game:
         raise HTTPException(status_code=404, detail="Game not found")
+    
+    # Validate Game status
+    if game.status == "finished":
+        raise HTTPException(status_code=400, detail="Game already finished")
 
     # Validate turn ownership
     if game.current_turn_player_id != request.player_id:
@@ -299,11 +309,17 @@ def activate_ability(
         "camp_index": request.target_camp_index
     }
 
+    # Exhaust card
+    person["ready"] = False
+
     # Execute effect
     execute_effect(state, effect, target)
 
-    # Exhaust card
-    person["ready"] = False
+    result = check_game_end(state, game)
+
+    if result["game_over"]:
+        game.status = "finished"
+        game.winner_id = result["winner_id"]
 
     # Persist state
     game_state.state_json = state
@@ -312,5 +328,7 @@ def activate_ability(
 
     return {
         "message": "Ability activated",
-        "state": state
+        "state": state,
+        "game_over": result["game_over"],
+        "winner_id": result.get("winner_id")
     }

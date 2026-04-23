@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, ForeignKey, DateTime # type: ignore
+from sqlalchemy.dialects.postgresql import JSONB # type: ignore
+from sqlalchemy.sql import func # type: ignore
 from app.db.database import Base
 
 

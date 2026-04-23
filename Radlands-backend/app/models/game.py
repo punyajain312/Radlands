@@ -1,6 +1,6 @@
-from sqlalchemy import Column, Integer, ForeignKey, String, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy import Column, Integer, ForeignKey, String, DateTime # type: ignore
+from sqlalchemy.orm import relationship # type: ignore
+from sqlalchemy.sql import func # type: ignore
 from app.db.database import Base
 
 class Game(Base):

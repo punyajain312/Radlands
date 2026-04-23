@@ -1,1 +1,296 @@
-[]
+[
+    {
+    "id": "strafe",
+    "name": "Strafe",
+    "type": "event",
+    "cost": { "water": 2 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "injure",
+            "target": {
+            "scope": "all",
+            "side": "enemy",
+            "filters": {
+                "type": ["people"],
+                "protected": false
+            }
+            }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        { "type": "draw", "value": 1, "target": { "scope": "self" } }
+        ]
+    }
+    },
+
+    {
+    "id": "napalm",
+    "name": "Napalm",
+    "type": "event",
+    "cost": { "water": 2 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "destroy",
+            "target": {
+            "scope": "column",
+            "side": "enemy"
+            }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        {
+            "type": "restore",
+            "target": { "scope": "one", "side": "self" }
+        }
+        ]
+    }
+    },
+
+    {
+    "id": "radiation",
+    "name": "Radiation",
+    "type": "event",
+    "cost": { "water": 2 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "injure",
+            "target": {
+            "scope": "all",
+            "side": "both",
+            "filters": { "type": ["people"] }
+            }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        { "type": "raid", "target": { "scope": "self" } }
+        ]
+    }
+    },
+
+    {
+    "id": "interrogate",
+    "name": "Interrogate",
+    "type": "event",
+    "cost": { "water": 1 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "draw_select",
+            "draw": 4,
+            "keep": 1,
+            "discard": 3,
+            "target": { "scope": "self" }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        { "type": "water", "value": 1, "target": { "scope": "self" } }
+        ]
+    }
+    },
+
+    {
+    "id": "truce",
+    "name": "Truce",
+    "type": "event",
+    "cost": { "water": 2 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "return",
+            "target": {
+            "scope": "all",
+            "side": "both",
+            "filters": { "type": ["people"] }
+            }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        {
+            "type": "injure",
+            "target": {
+            "scope": "one",
+            "side": "enemy",
+            "filters": { "type": ["people"] }
+            }
+        }
+        ]
+    }
+    },
+
+    {
+    "id": "banish",
+    "name": "Banish",
+    "type": "event",
+    "cost": { "water": 1 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "destroy",
+            "target": {
+            "scope": "one",
+            "side": "enemy"
+            }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        { "type": "raid", "target": { "scope": "self" } }
+        ]
+    }
+    },
+
+    {
+    "id": "famine",
+    "name": "Famine",
+    "type": "event",
+    "cost": { "water": 1 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "destroy_all_but_one",
+            "target": {
+            "scope": "players_sequential",
+            "side": "both",
+            "filters": { "type": ["people"] }
+            },
+            "order": "starting_with_self"
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        {
+            "type": "injure",
+            "target": {
+            "scope": "one",
+            "side": "enemy",
+            "filters": { "type": ["people"] }
+            }
+        }
+        ]
+    }
+    },
+
+    {
+    "id": "bombardment",
+    "name": "Bombardment",
+    "type": "event",
+    "cost": { "water": 3 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "damage",
+            "target": {
+            "scope": "all",
+            "side": "enemy",
+            "filters": { "type": ["camp"] }
+            }
+        },
+        {
+            "type": "draw_per_destroyed",
+            "based_on": "camps_destroyed_by_this_effect",
+            "value": 1,
+            "sequence": 2
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        {
+            "type": "restore",
+            "target": { "scope": "one", "side": "self" }
+        }
+        ]
+    }
+    },
+
+    {
+    "id": "high_ground",
+    "name": "High Ground",
+    "type": "event",
+    "cost": { "water": 0 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "rearrange",
+            "target": {
+            "scope": "self",
+            "filters": { "type": ["people"] }
+            }
+        },
+        {
+            "type": "modify_state",
+            "effect": "all_enemy_cards_unprotected",
+            "duration": "turn"
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        { "type": "water", "value": 1, "target": { "scope": "self" } }
+        ]
+    }
+    },
+
+    {
+    "id": "uprising",
+    "name": "Uprising",
+    "type": "event",
+    "cost": { "water": 1 },
+
+    "play_effect": {
+        "effects": [
+        {
+            "type": "gain_punk",
+            "value": 3,
+            "target": { "scope": "self" }
+        }
+        ]
+    },
+
+    "junk_effect": {
+        "effects": [
+        {
+            "type": "injure",
+            "target": {
+            "scope": "one",
+            "side": "enemy",
+            "filters": { "type": ["people"] }
+            }
+        }
+        ]
+    }
+    }   
+]
