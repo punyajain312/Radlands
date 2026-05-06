@@ -1,9 +1,18 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.routes import auth_routes
 from app.routes.game_routes import router as game_router
 
 app = FastAPI(title="Radlands API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # tighten in production to your frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -13,4 +22,4 @@ app.include_router(auth_routes.router)
 
 @app.get("/")
 def root():
-    return {"message": "Radlands Backend Running 🚀"}
+    return {"message": "Radlands Backend Running"}

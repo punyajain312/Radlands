@@ -5,7 +5,7 @@ from app.models.game_state import GameState
 from app.core.deck import generate_shuffled_deck
 
 
-def initialize_game_state(db: Session, game):
+def initialize_game_state(db: Session, game) -> GameState:
 
     # Generate shuffled deck
     deck = generate_shuffled_deck(db)
@@ -42,7 +42,7 @@ def initialize_game_state(db: Session, game):
     game.turn_number = 1
     game.status = "active"
 
-    # Assign starting water
+    # Starting player gets 1 water; opponent gets 3 (they'll take first turn soon)
     player1_water = 1 if start_player == game.player1_id else 3
     player2_water = 1 if start_player == game.player2_id else 3
 
@@ -57,6 +57,7 @@ def initialize_game_state(db: Session, game):
             str(game.player1_id): {
                 "hand": player1_hand,
                 "water": player1_water,
+                "discard": [],
                 "camps": [
                     {"card_id": c.id, "damage": 0, "destroyed": False}
                     for c in player1_camps
@@ -67,6 +68,7 @@ def initialize_game_state(db: Session, game):
             str(game.player2_id): {
                 "hand": player2_hand,
                 "water": player2_water,
+                "discard": [],
                 "camps": [
                     {"card_id": c.id, "damage": 0, "destroyed": False}
                     for c in player2_camps
@@ -88,59 +90,75 @@ def initialize_game_state(db: Session, game):
         db.commit()
         db.refresh(game)
         db.refresh(game_state)
-    except:
+    except Exception:
         db.rollback()
         raise
 
     return game_state
 
-# Draw Card on Turn Change
-def draw_card(player: dict):
 
-    # If deck empty → reshuffle
-    if len(player["deck"]) == 0:
+def draw_card(state: dict, player_id: int) -> str | None:
 
-        if len(player["discard"]) == 0:
-            return None  # nothing to draw
+    player = state["players"][str(player_id)]
+
+    if len(state["deck"]) == 0:
+        if len(state["discard"]) == 0:
+            # Nothing left anywhere — game ends in draw
+            return "DRAW"
+
+        if state["deck_cycles"] >= 2:
+            # Already on the second deck — exhausting it triggers a draw
+            return "DRAW"
 
         # Reshuffle discard into deck
-        player["deck"] = player["discard"]
-        player["discard"] = []
-        random.shuffle(player["deck"])
+        state["deck"] = state["discard"]
+        state["discard"] = []
+        random.shuffle(state["deck"])
+        state["deck_cycles"] += 1
 
-        player["deck_cycles"] += 1
-
-    # Draw card
-    card = player["deck"].pop(0)
+    card = state["deck"].pop(0)
     player["hand"].append(card)
-
     return card
 
-# Game Checker
-def check_game_end(state, game):
 
-    destroyed_players = []
+def advance_events(state: dict, player_id: int, db) -> list[dict]:
+    """
+    Advance all queued events for player_id by one tick.
+    Returns a list of events that fired this tick (for the response).
+    """
+    from app.models.card import Card as CardModel
 
-    for player_id, player_data in state["players"].items():
-        if all(camp.get("destroyed", False) for camp in player_data["camps"]):
-            destroyed_players.append(int(player_id))
+    player = state["players"][str(player_id)]
+    fired = []
+
+    for slot_idx, slot in enumerate(player["events"]):
+        if slot is None:
+            continue
+
+        slot["turns_remaining"] -= 1
+
+        if slot["turns_remaining"] <= 0:
+            card_def = db.query(CardModel).filter(CardModel.id == slot["card_id"]).first()
+            fired.append({"slot": slot_idx, "card_id": slot["card_id"]})
+            player["events"][slot_idx] = None
+            # Caller must execute play_effect from card_def if desired
+
+    return fired
+
+
+def check_game_end(state: dict, game) -> dict:
+    destroyed_players = [
+        int(pid)
+        for pid, pdata in state["players"].items()
+        if all(c.get("destroyed", False) for c in pdata["camps"])
+    ]
 
     if len(destroyed_players) == 1:
         loser = destroyed_players[0]
         winner = game.player2_id if loser == game.player1_id else game.player1_id
+        return {"game_over": True, "winner_id": winner, "loser_id": loser}
 
-        return {
-            "game_over": True,
-            "winner_id": winner,
-            "loser_id": loser
-        }
-
-    elif len(destroyed_players) > 1:
-        return {
-            "game_over": True,
-            "winner_id": None,  # draw
-            "draw": True
-        }
+    if len(destroyed_players) > 1:
+        return {"game_over": True, "winner_id": None, "draw": True}
 
     return {"game_over": False}
-
