@@ -1,13 +1,31 @@
+import os
+import re
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session # type: ignore
+from google.oauth2 import id_token as google_id_token # type: ignore
+from google.auth.transport import requests as google_requests # type: ignore
 from app.db.dependencies import get_db
 from app.models.player import Player
 from app.models.game import Game
-from app.schemas.auth import RegisterRequest, LoginRequest, DeleteRequest, TokenResponse
+from app.schemas.auth import RegisterRequest, LoginRequest, DeleteRequest, GoogleLoginRequest, TokenResponse
 from app.core.security import hash_password, verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+def _slugify(name: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_]", "", name.replace(" ", "_")) or "user"
+
+def _unique_username(base: str, db: Session) -> str:
+    candidate = base[:20]
+    if not db.query(Player.id).filter(Player.username == candidate).scalar():
+        return candidate
+    i = 1
+    while True:
+        candidate = f"{base[:18]}_{i}"
+        if not db.query(Player.id).filter(Player.username == candidate).scalar():
+            return candidate
+        i += 1
 
 @router.post("/register", response_model=TokenResponse)
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
@@ -44,7 +62,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 def delete(request: DeleteRequest, db: Session = Depends(get_db)):
     user = db.query(Player).filter(Player.username == request.username).first()
 
-    if not user or not verify_password(request.password, user.password):
+    if not user or not user.password or not verify_password(request.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     db.query(Game).filter(
@@ -58,3 +76,44 @@ def delete(request: DeleteRequest, db: Session = Depends(get_db)):
         "message": "User deleted",
         "user_id": user.id
     }
+
+
+@router.post("/google", response_model=TokenResponse)
+def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=503, detail="Google login not configured")
+
+    try:
+        info = google_id_token.verify_oauth2_token(
+            request.id_token,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+
+    google_id = info["sub"]
+    email = info.get("email", "")
+    name = info.get("name", "")
+
+    user = db.query(Player).filter(Player.google_id == google_id).first()
+
+    if not user:
+        # Try to link by email if the account already exists
+        user = db.query(Player).filter(Player.email == email).first()
+        if user:
+            user.google_id = google_id
+        else:
+            username = _unique_username(_slugify(name) or "user", db)
+            user = Player(
+                username=username,
+                email=email,
+                google_id=google_id,
+                password=None,
+            )
+            db.add(user)
+
+    db.commit()
+    db.refresh(user)
+
+    return TokenResponse(access_token=create_access_token(user.id), user_id=user.id)
