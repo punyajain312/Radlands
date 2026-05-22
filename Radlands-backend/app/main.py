@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.db.database import engine, Base
 from app.routes import auth_routes
 from app.routes.game_routes import router as game_router
+from app.routes.ws_routes import ws_router
 
 app = FastAPI(title="Radlands API")
 
@@ -22,6 +23,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(game_router)
 app.include_router(auth_routes.router)
+app.include_router(ws_router)
 
 
 @app.get("/")

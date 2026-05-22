@@ -15,6 +15,7 @@ from app.core.game_initializer import (
     check_game_end,
 )
 from app.core.effect_engine import execute_effect, check_condition, is_camp_protected
+from app.core.connection_manager import manager
 from app.schemas.game import (
     CreateGameRequest,
     PlayPersonRequest,
@@ -121,6 +122,18 @@ def _finish_game(game: Game, result: dict) -> None:
     game.winner_id = result.get("winner_id")
 
 
+async def _broadcast(game: Game, state: dict) -> None:
+    await manager.broadcast(game.id, {
+        "type": "game_state",
+        "game_id": game.id,
+        "status": game.status,
+        "current_turn_player_id": game.current_turn_player_id,
+        "turn_number": game.turn_number,
+        "winner_id": game.winner_id,
+        "state": state,
+    })
+
+
 # ---------------------------------------------------------------------------
 # Root
 # ---------------------------------------------------------------------------
@@ -135,7 +148,7 @@ def root():
 # ---------------------------------------------------------------------------
 
 @router.post("/games/create")
-def create_game(
+async def create_game(
     request: CreateGameRequest,
     current_player_id: int = Depends(get_current_player_id),
     db: Session = Depends(get_db),
@@ -170,7 +183,7 @@ def create_game(
 
 
 @router.get("/games/")
-def list_games(
+async def list_games(
     current_player_id: int = Depends(get_current_player_id),
     db: Session = Depends(get_db),
 ):
@@ -194,7 +207,7 @@ def list_games(
 
 
 @router.get("/games/{game_id}")
-def get_game(
+async def get_game(
     game_id: int,
     current_player_id: int = Depends(get_current_player_id),
     db: Session = Depends(get_db),
@@ -226,7 +239,7 @@ def get_game(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/end-turn/{game_id}")
-def end_turn(
+async def end_turn(
     game_id: int,
     current_player_id: int = Depends(get_current_player_id),
     db: Session = Depends(get_db),
@@ -254,6 +267,7 @@ def end_turn(
         game.status = "finished"
         game.winner_id = None
         _save_state(db, game, game_state, state)
+        await _broadcast(game, state)
         return {"message": "Game ended in a draw (deck exhausted)", "game_over": True, "draw": True, "state": state}
 
     # Set next player's water and ready all their people
@@ -263,6 +277,7 @@ def end_turn(
             person["ready"] = True
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
 
     return {
         "message": "Turn ended",
@@ -277,7 +292,7 @@ def end_turn(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/play-person/{game_id}")
-def play_person(
+async def play_person(
     game_id: int,
     request: PlayPersonRequest,
     current_player_id: int = Depends(get_current_player_id),
@@ -330,6 +345,7 @@ def play_person(
                 pass  # don't crash the whole play if enter effect isn't implemented yet
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
     return {"message": "Person played", "state": state}
 
 
@@ -338,7 +354,7 @@ def play_person(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/activate-ability/{game_id}")
-def activate_ability(
+async def activate_ability(
     game_id: int,
     request: ActivateAbilityRequest,
     current_player_id: int = Depends(get_current_player_id),
@@ -395,6 +411,7 @@ def activate_ability(
         _finish_game(game, result)
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
 
     return {
         "message": "Ability activated",
@@ -409,7 +426,7 @@ def activate_ability(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/activate-camp/{game_id}")
-def activate_camp(
+async def activate_camp(
     game_id: int,
     request: ActivateCampRequest,
     current_player_id: int = Depends(get_current_player_id),
@@ -476,6 +493,7 @@ def activate_camp(
         _finish_game(game, result)
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
 
     return {
         "message": "Camp ability activated",
@@ -490,7 +508,7 @@ def activate_camp(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/junk-card/{game_id}")
-def junk_card(
+async def junk_card(
     game_id: int,
     request: JunkCardRequest,
     current_player_id: int = Depends(get_current_player_id),
@@ -528,6 +546,7 @@ def junk_card(
         _finish_game(game, result)
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
 
     return {
         "message": "Card junked",
@@ -542,7 +561,7 @@ def junk_card(
 # ---------------------------------------------------------------------------
 
 @router.post("/games/play-event/{game_id}")
-def play_event(
+async def play_event(
     game_id: int,
     request: PlayEventRequest,
     current_player_id: int = Depends(get_current_player_id),
@@ -576,5 +595,6 @@ def play_event(
     player["events"][slot] = {"card_id": request.card_id, "turns_remaining": fuse}
 
     _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
 
     return {"message": "Event queued", "state": state}

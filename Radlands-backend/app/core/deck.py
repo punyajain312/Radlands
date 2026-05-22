@@ -10,7 +10,10 @@ def generate_shuffled_deck(db):
 
     deck = []
     for card in cards:
-        deck.extend([card.id, card.id]) 
+        if card.data.get("special"):
+            continue
+        copies = card.count if card.count and card.count > 0 else 1
+        deck.extend([card.id] * copies)
 
     random.shuffle(deck)
     return deck

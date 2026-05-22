@@ -1,214 +1,36 @@
 [
   {
-    "id": "doomsayer",
-    "name": "Doomsayer",
+    "id": "looter",
+    "name": "Looter",
+    "count": 2,
     "cost": { "water": 1 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 1, "tap": true },
-        "effects": [
-          {
-            "type": "conditional_effect",
-            "condition": { "check": "opponent_has_event_in_play" },
-            "then": [
-              {
-                "type": "damage",
-                "value": 1,
-                "target": { "scope": "all", "side": "enemy" }
-              }
-            ]
-          }
-        ]
-      }
-    ],
-    "enter_effect": {
-      "optional": true,
-      "effects": [
-        {
-          "type": "move",
-          "value": "back_1",
-          "target": {
-            "scope": "all",
-            "side": "enemy",
-            "filters": { "type": ["event"] }
-          }
-        }
-      ]
-    }
-  },
-
-  {
-    "id": "argo_yesky",
-    "name": "Argo Yesky",
-    "cost": { "water": 3 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 1, "tap": true },
-        "effects": [
-          {
-            "type": "damage",
-            "value": 1,
-            "target": { "scope": "all", "side": "enemy" }
-          }
-        ]
-      }
-    ],
-    "passive_abilities": [
-      {
-        "type": "grant_ability",
-        "target": { "scope": "all", "side": "self" },
-        "ability_source": "self_activated_ability"
-      }
-    ],
-    "enter_effect": {
-      "optional": true,
-      "effects": [
-        {
-          "type": "discard",
-          "value": 1,
-          "target": { "scope": "self" }
-        }
-      ]
-    }
-  },
-
-  {
-    "id": "muse",
-    "name": "Muse",
-    "cost": { "water": 1 },
-    "passive_abilities": [
-      {
-        "type": "water",
-        "value": 1,
-        "trigger": "on_turn_start"
-      }
-    ]
-  },
-
-  {
-    "id": "holdout",
-    "name": "Holdout",
-    "cost": { "water": 2 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 1, "tap": true },
-        "effects": [
-          {
-            "type": "conditional_play_for_free",
-            "condition": { "check": "destroyed_camp_in_column" }
-          }
-        ]
-      }
-    ]
-  },
-
-  {
-    "id": "rescue_team",
-    "name": "Rescue Team",
-    "cost": { "water": 1 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 0, "tap": true },
-        "effects": [
-          {
-            "type": "return",
-            "target": {
-              "scope": "one",
-              "side": "self",
-              "filters": { "type": ["people"] }
-            }
-          }
-        ]
-      }
-    ],
-    "enter_effect": {
-      "effects": [
-        { "type": "ready", "target": { "scope": "self" } }
-      ]
-    }
-  },
-
-  {
-    "id": "mutant",
-    "name": "Mutant",
-    "cost": { "water": 1 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 0, "tap": true },
-        "effects": [
-          {
-            "type": "choice",
-            "options": [
-              {
-                "type": "damage",
-                "value": 1,
-                "target": { "scope": "one", "side": "enemy" }
-              },
-              {
-                "type": "move",
-                "target": { "scope": "self" }
-              }
-            ]
-          },
-          {
-            "type": "damage",
-            "value": 1,
-            "target": { "scope": "self" },
-            "sequence": 2
-          }
-        ]
-      }
-    ]
-  },
-
-  {
-    "id": "exterminator",
-    "name": "Exterminator",
-    "cost": { "water": 2 },
     "activated_abilities": [
       {
         "cost": { "water": 2, "tap": true },
         "effects": [
           {
-            "type": "destroy",
-            "target": {
-              "scope": "all",
-              "side": "enemy",
-              "filters": { "type": ["people"] }
-            }
-          }
-        ]
-      }
-    ]
-  },
-
-  {
-    "id": "scout",
-    "name": "Scout",
-    "cost": { "water": 1 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 0, "tap": true },
-        "effects": [
-          {
-            "type": "peek",
+            "type": "damage",
             "value": 1,
-            "target": { "scope": "deck", "side": "enemy" }
+            "target": { "scope": "one", "side": "enemy" }
           },
           {
-            "type": "optional_reorder",
-            "target": { "scope": "deck_top", "side": "enemy" },
-            "sequence": 2
+            "type": "draw_if_hit_camp",
+            "value": 1
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_water", "value": 1 }
+      ]
+    }
   },
-
   {
-    "id": "cult_leader",
-    "name": "Cult Leader",
-    "cost": { "water": 2 },
+    "id": "wounded_soldier",
+    "name": "Wounded Soldier",
+    "count": 2,
+    "cost": { "water": 1 },
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
@@ -221,189 +43,479 @@
         ]
       }
     ],
-    "passive_abilities": [
-      {
-        "type": "modify_cost",
-        "value": -1,
-        "condition": { "check": "is_punk" }
-      }
-    ]
+    "enter_effect": {
+      "optional": false,
+      "effects": [
+        { "type": "draw", "value": 1 },
+        { "type": "damage", "value": 1, "target": { "scope": "self" } }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
   },
-
+  {
+    "id": "cult_leader",
+    "name": "Cult Leader",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 0, "tap": true },
+        "effects": [
+          {
+            "type": "destroy",
+            "target": { "scope": "one", "side": "self", "filters": { "type": ["person"] } }
+          },
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "one", "side": "enemy" }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "draw", "value": 1 }
+      ]
+    }
+  },
+  {
+    "id": "repair_bot",
+    "name": "Repair Bot",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 2, "tap": true },
+        "effects": [
+          {
+            "type": "restore",
+            "target": { "scope": "one", "side": "self" }
+          }
+        ]
+      }
+    ],
+    "enter_effect": {
+      "optional": false,
+      "effects": [
+        { "type": "restore", "target": { "scope": "one", "side": "self" } }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
+  },
+  {
+    "id": "gunner",
+    "name": "Gunner",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 2, "tap": true },
+        "effects": [
+          {
+            "type": "injure",
+            "target": { "side": "enemy", "filters": { "protected": false } }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "restore", "target": { "scope": "one", "side": "self" } }
+      ]
+    }
+  },
+  {
+    "id": "assassin",
+    "name": "Assassin",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 2, "tap": true },
+        "effects": [
+          {
+            "type": "destroy",
+            "target": { "scope": "one", "side": "enemy", "filters": { "type": ["person"], "protected": false } }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
+  },
   {
     "id": "scientist",
     "name": "Scientist",
+    "count": 2,
     "cost": { "water": 1 },
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
         "effects": [
-          { "type": "draw", "value": 2 },
-          { "type": "discard", "value": 1, "sequence": 2 }
-        ]
-      }
-    ]
-  },
-
-  {
-    "id": "vera_vosh",
-    "name": "Vera Vosh",
-    "cost": { "water": 3 },
-    "passive_abilities": [
-      {
-        "type": "modify_state",
-        "effect": "all_enemy_people_enter_damaged"
-      }
-    ]
-  },
-
-  {
-    "id": "sniper",
-    "name": "Sniper",
-    "cost": { "water": 2 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 1, "tap": true },
-        "effects": [
+          { "type": "peek_and_junk", "peek": 3 },
           {
             "type": "damage",
             "value": 1,
-            "target": {
-              "scope": "one",
-              "side": "enemy",
-              "filters": { "position": "back_only" }
-            }
+            "target": { "scope": "self" }
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
   },
-
   {
-    "id": "mimic",
-    "name": "Mimic",
-    "cost": { "water": 2 },
+    "id": "mutant",
+    "name": "Mutant",
+    "count": 2,
+    "cost": { "water": 1 },
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
         "effects": [
           {
-            "type": "copy_ability",
-            "target": {
-              "scope": "one",
-              "side": "any",
-              "filters": { "type": ["people"] }
-            }
+            "type": "choice",
+            "options": [
+              { "type": "damage", "value": 1, "target": { "scope": "one", "side": "enemy" } },
+              { "type": "restore", "target": { "scope": "one", "side": "self" } }
+            ]
+          },
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "self" }
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
   },
-
   {
-    "id": "assassin",
-    "name": "Assassin",
-    "cost": { "water": 2 },
+    "id": "vigilante",
+    "name": "Vigilante",
+    "count": 1,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          { "type": "injure", "target": { "side": "enemy" } }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
+  },
+  {
+    "id": "rescue_team",
+    "name": "Rescue Team",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 0, "tap": true },
+        "effects": [
+          {
+            "type": "return",
+            "target": { "scope": "one", "side": "self", "filters": { "type": ["person"] } }
+          }
+        ]
+      }
+    ],
+    "enter_effect": {
+      "optional": false,
+      "effects": [
+        { "type": "ready", "target": { "scope": "self" } }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
+  },
+  {
+    "id": "muse",
+    "name": "Muse",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 0, "tap": true },
+        "effects": [
+          { "type": "gain_water", "value": 1 }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
+  },
+  {
+    "id": "mimic",
+    "name": "Mimic",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 0, "tap": true },
+        "effects": [
+          {
+            "type": "copy_ability",
+            "target": { "scope": "one", "side": "any", "filters": { "type": ["person"], "condition": "ready_self_or_undamaged_enemy" } }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
+  },
+  {
+    "id": "exterminator",
+    "name": "Exterminator",
+    "count": 2,
+    "cost": { "water": 1 },
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
         "effects": [
           {
             "type": "destroy",
-            "target": {
-              "scope": "one",
-              "side": "enemy",
-              "filters": { "damaged": true }
-            }
+            "target": { "scope": "all", "side": "enemy", "filters": { "type": ["person"], "damaged": true } }
           }
         ]
       }
     ]
   },
-
   {
-    "id": "repair_bot",
-    "name": "Repair Bot",
+    "id": "scout",
+    "name": "Scout",
+    "count": 2,
     "cost": { "water": 1 },
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
         "effects": [
-          { "type": "restore", "target": { "scope": "one", "side": "self" } }
+          { "type": "raid" }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_water", "value": 1 }
+      ]
+    }
   },
-
-  {
-    "id": "molgur_stang",
-    "name": "Molgur Stang",
-    "cost": { "water": 3 },
-    "passive_abilities": [
-      {
-        "type": "on_destroy",
-        "effects": [
-          {
-            "type": "damage",
-            "value": 1,
-            "target": { "scope": "all", "side": "enemy" }
-          }
-        ]
-      }
-    ]
-  },
-
-  {
-    "id": "looter",
-    "name": "Looter",
-    "cost": { "water": 1 },
-    "activated_abilities": [
-      {
-        "cost": { "water": 0, "tap": true },
-        "effects": [
-          { "type": "discard", "value": 1, "target": { "scope": "enemy_hand" } }
-        ]
-      }
-    ]
-  },
-
   {
     "id": "pyromaniac",
     "name": "Pyromaniac",
+    "count": 2,
     "cost": { "water": 1 },
     "activated_abilities": [
       {
-        "cost": { "water": 0, "tap": true },
+        "cost": { "water": 1, "tap": true },
         "effects": [
           {
             "type": "damage",
             "value": 1,
-            "target": { "scope": "one", "side": "any" }
+            "target": { "scope": "one", "side": "enemy", "filters": { "type": ["camp"], "protected": false } }
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "injure", "target": { "side": "enemy" } }
+      ]
+    }
   },
-
   {
-    "id": "zeto_khan",
-    "name": "Zeto Khan",
-    "cost": { "water": 3 },
-    "passive_abilities": [
-      {
-        "type": "modify_state",
-        "effect": "all_punks_gain_damage_ability"
-      }
-    ]
-  },
-
-  {
-    "id": "karla_blaze",
-    "name": "Karla Blaze",
+    "id": "holdout",
+    "name": "Holdout",
+    "count": 2,
     "cost": { "water": 2 },
+    "trait": "play_free_in_destroyed_camp_column",
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
+        "effects": [
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "one", "side": "enemy" }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
+  },
+  {
+    "id": "doomsayer",
+    "name": "Doomsayer",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          {
+            "type": "conditional_effect",
+            "condition": { "check": "opponent_has_event_in_play" },
+            "then": [
+              {
+                "type": "damage",
+                "value": 1,
+                "target": { "scope": "one", "side": "enemy" }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "enter_effect": {
+      "optional": true,
+      "effects": [
+        {
+          "type": "move",
+          "direction": "back",
+          "value": 1,
+          "target": { "scope": "one", "side": "enemy", "filters": { "type": ["event"] } }
+        }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "draw", "value": 1 }
+      ]
+    }
+  },
+  {
+    "id": "rabble_rouser",
+    "name": "Rabble Rouser",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          { "type": "gain_punk", "value": 1 }
+        ]
+      },
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          {
+            "type": "conditional_effect",
+            "condition": { "check": "you_have_a_punk" },
+            "then": [
+              {
+                "type": "damage",
+                "value": 1,
+                "target": { "scope": "one", "side": "enemy" }
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
+  },
+  {
+    "id": "vanguard",
+    "name": "Vanguard",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "one", "side": "enemy" }
+          },
+          { "type": "opponent_damage_back", "value": 1 }
+        ]
+      }
+    ],
+    "enter_effect": {
+      "optional": false,
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "raid" }
+      ]
+    }
+  },
+  {
+    "id": "sniper",
+    "name": "Sniper",
+    "count": 2,
+    "cost": { "water": 1 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 2, "tap": true },
+        "effects": [
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "one", "side": "enemy", "bypass_protection": true }
+          }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "restore", "target": { "scope": "one", "side": "self" } }
+      ]
+    }
+  },
+  {
+    "id": "magnus_karv",
+    "name": "Magnus Karv",
+    "count": 1,
+    "cost": { "water": 3 },
+    "activated_abilities": [
+      {
+        "cost": { "water": 2, "tap": true },
         "effects": [
           {
             "type": "damage",
@@ -412,13 +524,60 @@
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    }
   },
-
   {
-    "id": "gunner",
-    "name": "Gunner",
-    "cost": { "water": 1 },
+    "id": "zeto_khan",
+    "name": "Zeto Khan",
+    "count": 1,
+    "cost": { "water": 3 },
+    "trait": "first_event_each_turn_zero_queue",
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          { "type": "draw", "value": 3 },
+          { "type": "discard", "value": 3 }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    }
+  },
+  {
+    "id": "vera_vosh",
+    "name": "Vera Vosh",
+    "count": 1,
+    "cost": { "water": 3 },
+    "trait": "first_ability_each_turn_card_stays_ready",
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          { "type": "injure", "target": { "side": "enemy" } }
+        ]
+      }
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    }
+  },
+  {
+    "id": "karli_blaze",
+    "name": "Karli Blaze",
+    "count": 1,
+    "cost": { "water": 3 },
+    "trait": "all_your_people_enter_ready",
     "activated_abilities": [
       {
         "cost": { "water": 1, "tap": true },
@@ -426,38 +585,67 @@
           {
             "type": "damage",
             "value": 1,
-            "target": { "scope": "adjacent_enemies" }
+            "target": { "scope": "one", "side": "enemy" }
           }
         ]
       }
-    ]
-  },
-
-  {
-    "id": "rabble_rouser",
-    "name": "Rabble Rouser",
-    "cost": { "water": 1 },
-    "enter_effect": {
+    ],
+    "junk_effect": {
       "effects": [
         { "type": "gain_punk", "value": 1 }
       ]
     }
   },
-
   {
-    "id": "magnus_karv",
-    "name": "Magnus Karv",
-    "cost": { "water": 3 },
+    "id": "molgur_stang",
+    "name": "Molgur Stang",
+    "count": 1,
+    "cost": { "water": 4 },
     "activated_abilities": [
       {
-        "cost": { "water": 2, "tap": true },
+        "cost": { "water": 1, "tap": true },
         "effects": [
           {
             "type": "destroy",
-            "target": { "scope": "all", "side": "enemy" }
+            "target": { "scope": "one", "side": "enemy", "filters": { "type": ["camp"] } }
           }
         ]
       }
-    ]
+    ],
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    }
+  },
+  {
+    "id": "argo_yesky",
+    "name": "Argo Yesky",
+    "count": 1,
+    "cost": { "water": 3 },
+    "trait": "all_your_people_gain_damage_ability",
+    "activated_abilities": [
+      {
+        "cost": { "water": 1, "tap": true },
+        "effects": [
+          {
+            "type": "damage",
+            "value": 1,
+            "target": { "scope": "one", "side": "enemy" }
+          }
+        ]
+      }
+    ],
+    "enter_effect": {
+      "optional": false,
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    },
+    "junk_effect": {
+      "effects": [
+        { "type": "gain_punk", "value": 1 }
+      ]
+    }
   }
 ]

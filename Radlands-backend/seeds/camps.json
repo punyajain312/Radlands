@@ -1,175 +1,583 @@
 [
-    {
-        "id": 307,
-        "name": "Nest of Spies",
-        "type": "camp",
-        "count": 0,
-        "ability": [
+  {
+    "id": "railgun",
+    "name": "Railgun",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "atomic_garden",
+    "name": "Atomic Garden",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "restore", "target": "caller" },
+            { "type": "ready", "target": "caller" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "cannon",
+    "name": "Cannon",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "damage", "target": "self", "amount": 1 },
+            { "type": "damage", "target": "unprotected", "amount": 1 }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "pillbox",
+    "name": "Pillbox",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 3,
+        "cost_modifier": { "type": "per_destroyed_camp_you_have", "reduction": 1 },
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "scud_launcher",
+    "name": "Scud Launcher",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "damage", "target": "opponent_choice", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "victory_totem",
+    "name": "Victory Totem",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      },
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "raid" }
+      }
+    ]
+  },
+  {
+    "id": "catapult",
+    "name": "Catapult",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "damage", "target": "any", "amount": 1 },
+            { "type": "destroy", "target": "one_of_your_people" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "nest_of_spies",
+    "name": "Nest of Spies",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "people_played_this_turn", "operator": ">=", "value": 2 },
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "command_post",
+    "name": "Command Post",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 2,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 3,
+        "cost_modifier": { "type": "per_punk_you_have", "reduction": 1 },
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "obelisk",
+    "name": "Obelisk",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 3,
+    "ability": [],
+    "trait": "destroy_before_game_start"
+  },
+  {
+    "id": "mercenary_camp",
+    "name": "Mercenary Camp",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "damage_unless_opponent_discards_two", "target": "opponent_choice", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "reactor",
+    "name": "Reactor",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "destroy", "target": "self" },
+            { "type": "destroy", "target": "all_people" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "the_octagon",
+    "name": "The Octagon",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "destroy", "target": "one_of_your_people" },
+            { "type": "opponent_destroys_one_person" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "juggernaut",
+    "name": "Juggernaut",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "juggernaut_move" }
+      }
+    ],
+    "trait": "juggernaut_advance_mechanic"
+  },
+  {
+    "id": "scavenger_camp",
+    "name": "Scavenger Camp",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "raid" }
+      },
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "raiders_resolved_this_turn" },
+        "effect": { "type": "restore", "target": "caller" }
+      }
+    ]
+  },
+  {
+    "id": "outpost",
+    "name": "Outpost",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "raid" }
+      },
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": { "type": "restore", "target": "caller" }
+      }
+    ]
+  },
+  {
+    "id": "transplant_lab",
+    "name": "Transplant Lab",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 2,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "people_played_this_turn", "operator": ">=", "value": 2 },
+        "effect": { "type": "restore", "target": "caller" }
+      }
+    ]
+  },
+  {
+    "id": "resonator",
+    "name": "Resonator",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": {
+          "type": "destroy",
+          "target": { "scope": "one", "side": "enemy", "filters": { "damaged": true, "protected": false } }
+        }
+      }
+    ]
+  },
+  {
+    "id": "bonfire",
+    "name": "Bonfire",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "trait": "cannot_be_restored",
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "damage", "target": "self", "amount": 1 },
+            { "type": "restore", "target": "caller" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "cache",
+    "name": "Cache",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "damage", "target": "self", "amount": 1 },
             {
-                "type": "activated",
-                "cost": 1,
-                "condition": {
-                    "type": "people_played_this_turn",
-                    "operator": ">=",
-                    "value": 2
-                },
-                "effect": {
-                    "type": "damage",
-                    "target": "unprotected",
-                    "amount": 1
-                }
+              "type": "choice",
+              "options": [
+                { "type": "draw", "value": 1 },
+                { "type": "restore", "target": "caller" },
+                { "type": "gain_punk", "value": 1 }
+              ]
             }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 1
-    },
-    {
-        "id": 308,
-        "name": "Blood Bank",
-        "type": "camp",
-        "count": 0,
-        "ability": [
-            {
-                "type": "activated",
-                "cost": 0,
-                "effect": {
-                    "type": "sequence",
-                    "steps": [
-                        {
-                            "type": "destroy",
-                            "target": "one_of_your_people"
-                        },
-                        {
-                            "type": "gain_water",
-                            "amount": 1
-                        }
-                    ]
-                }
-            }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 1
-    },
-    {
-        "id": 309,
-        "name": "Pillbox",
-        "type": "camp",
-        "count": 0,
-        "ability": [
-            {
-                "type": "activated",
-                "cost": 3,
-                "cost_modifier": {
-                    "type": "per_destroyed_camp_you_have",
-                    "reduction": 1
-                },
-                "effect": {
-                    "type": "damage",
-                    "target": "unprotected",
-                    "amount": 1
-                }
-            }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 1
-    },
-    {
-        "id": 311,
-        "name": "Reactor",
-        "type": "camp",
-        "count": 0,
-        "ability": [
-            {
-                "type": "activated",
-                "cost": 2,
-                "effect": {
-                    "type": "sequence",
-                    "steps": [
-                        {
-                            "type": "destroy",
-                            "target": "self"
-                        },
-                        {
-                            "type": "destroy",
-                            "target": "all_people"
-                        }
-                    ]
-                }
-            }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 1
-    },
-    {
-        "id": 312,
-        "name": "Cannon",
-        "type": "camp",
-        "count": 0,
-        "ability": [
-            {
-                "type": "activated",
-                "cost": 1,
-                "effect": {
-                    "type": "sequence",
-                    "steps": [
-                        {
-                            "type": "damage",
-                            "target": "self",
-                            "amount": 1
-                        },
-                        {
-                            "type": "damage",
-                            "target": "unprotected",
-                            "amount": 1
-                        }
-                    ]
-                }
-            }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 1
-    },
-    {
-        "id": 313,
-        "name": "Railgun",
-        "type": "camp",
-        "count": 0,
-        "ability": [
-            {
-                "type": "activated",
-                "cost": 2,
-                "effect": {
-                    "type": "damage",
-                    "target": "unprotected",
-                    "amount": 2
-                }
-            }
-        ],
-        "junk_ability": null,
-        "on_play": null,
-        "passive": [],
-        "event_effect": null,
-        "bomb_number": null,
-        "initial_draw": 0
-    }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "watchtower",
+    "name": "Watchtower",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "event_resolved_this_turn" },
+        "effect": { "type": "damage", "target": "unprotected", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "construction_yard",
+    "name": "Construction Yard",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 2,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "this_card_not_damaged" },
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "flip_destroyed_camp" },
+            { "type": "destroy", "target": "self" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "adrenaline_lab",
+    "name": "Adrenaline Lab",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": { "type": "use_damaged_person_ability" }
+      }
+    ]
+  },
+  {
+    "id": "mulcher",
+    "name": "Mulcher",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "destroy", "target": "one_of_your_people" },
+            { "type": "draw", "value": 1 }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "blood_bank",
+    "name": "Blood Bank",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "destroy", "target": "one_of_your_people" },
+            { "type": "gain_water", "amount": 1 }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "arcade",
+    "name": "Arcade",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "condition": { "type": "people_on_board", "operator": "<=", "value": 1, "side": "self" },
+        "effect": { "type": "gain_punk", "value": 1 }
+      }
+    ]
+  },
+  {
+    "id": "training_camp",
+    "name": "Training Camp",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "flip_punk" }
+      }
+    ]
+  },
+  {
+    "id": "supply_depot",
+    "name": "Supply Depot",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 2,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 2,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "draw", "value": 2 },
+            { "type": "discard", "value": 1 }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "omen_clock",
+    "name": "Omen Clock",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "advance_event", "amount": 1 }
+      }
+    ]
+  },
+  {
+    "id": "warehouse",
+    "name": "Warehouse",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "damage", "target": "self", "amount": 1 },
+            { "type": "discard_then_draw_plus_one" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "garage",
+    "name": "Garage",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 0,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 1,
+        "effect": { "type": "raid" }
+      }
+    ]
+  },
+  {
+    "id": "oasis",
+    "name": "Oasis",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [],
+    "passive": [
+      { "type": "column_cost_reduction", "amount": 1, "condition": "no_people_in_column" }
+    ]
+  },
+  {
+    "id": "parachute_base",
+    "name": "Parachute Base",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": { "type": "play_person_use_ability" }
+      }
+    ]
+  },
+  {
+    "id": "labor_camp",
+    "name": "Labor Camp",
+    "count": 1,
+    "cost": {},
+    "initial_draw": 1,
+    "ability": [
+      {
+        "type": "activated",
+        "cost": 0,
+        "effect": {
+          "type": "sequence",
+          "steps": [
+            { "type": "destroy", "target": "one_of_your_people" },
+            { "type": "restore", "target": "caller" }
+          ]
+        }
+      }
+    ]
+  }
 ]

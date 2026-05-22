@@ -26,9 +26,10 @@ def seed_file(db, filename, card_type):
         card = Card(
             id=card_id,
             name=card_data["name"],
-            type=card_type,  # force type (fixes your error)
+            type=card_type,
             cost=card_data.get("cost", {}),
-            data=card_data  # full JSON stored here
+            count=card_data.get("count", 1),
+            data=card_data
         )
 
         db.add(card)
