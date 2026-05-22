@@ -137,10 +137,10 @@ export function ProfilePage({ auth, onBack }: ProfilePageProps) {
               </div>
             )}
 
-            {!stats.favorite_card && stats.games_played === 0 && (
+            {stats.games_played === 0 && (
               <div className="pp-no-games">
                 <span>No battles recorded yet.</span>
-                <span>Start a game to build your legend.</span>
+                <span>Enter the wasteland to build your legend.</span>
               </div>
             )}
           </>

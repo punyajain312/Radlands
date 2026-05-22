@@ -6,7 +6,10 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/auth': 'http://localhost:8000',
+      '/auth':   { target: 'http://localhost:8000', changeOrigin: true },
+      '/social': { target: 'http://localhost:8000', changeOrigin: true },
+      '/games':  { target: 'http://localhost:8000', changeOrigin: true },
+      '/ws':     { target: 'ws://localhost:8000',   ws: true },
     },
   },
 })

@@ -10,6 +10,7 @@ from app.models.game import Game
 from app.schemas.auth import RegisterRequest, LoginRequest, DeleteRequest, GoogleLoginRequest, TokenResponse
 from app.core.security import hash_password, verify_password, create_access_token
 from app.core.auth_deps import get_current_player_id
+from app.core.rate_limiter import auth_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -30,7 +31,7 @@ def _unique_username(base: str, db: Session) -> str:
         i += 1
 
 @router.post("/register", response_model=TokenResponse)
-def register(request: RegisterRequest, db: Session = Depends(get_db)):
+def register(request: RegisterRequest, db: Session = Depends(get_db), _: None = Depends(auth_rate_limit)):
     existing = db.query(Player).filter(
         (Player.username == request.username) | (Player.email == request.email)
     ).first()
@@ -55,7 +56,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: LoginRequest, db: Session = Depends(get_db), _: None = Depends(auth_rate_limit)):
     user = db.query(Player).filter(Player.username == request.username).first()
 
     if not user or not verify_password(request.password, user.password):

@@ -1,66 +1,308 @@
+/* ─── Root ─────────────────────────────────────── */
 .rb-root {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #08001a;
+  background: #04000f;
   font-family: 'Courier New', monospace;
+  color: #fff;
+  overflow: hidden;
+  position: relative;
 }
 
+.rb-scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(183, 0, 255, 0.025) 2px,
+    rgba(183, 0, 255, 0.025) 4px
+  );
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* ─── Header ────────────────────────────────────── */
 .rb-header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px 28px;
-  border-bottom: 1px solid rgba(183, 0, 255, 0.35);
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(6px);
+  gap: 16px;
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(183, 0, 255, 0.4);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.rb-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-right: auto;
+}
+
+.rb-title-label {
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  color: rgba(183, 0, 255, 0.6);
+}
+
+.rb-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  color: #b700ff;
+  text-shadow: 0 0 16px #b700ff, 0 0 40px rgba(183, 0, 255, 0.4);
+  margin: 0;
+}
+
+.rb-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rb-sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(183, 0, 255, 0.25);
+  margin: 0 4px;
+}
+
+/* ─── Buttons ────────────────────────────────────── */
+.rb-btn {
+  background: transparent;
+  border: 1px solid rgba(183, 0, 255, 0.45);
+  color: #b700ff;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.rb-btn:hover:not(:disabled) {
+  background: rgba(183, 0, 255, 0.14);
+  border-color: #b700ff;
+  box-shadow: 0 0 12px rgba(183, 0, 255, 0.3);
+}
+
+.rb-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.rb-btn-back {
+  color: rgba(183, 0, 255, 0.8);
+  white-space: nowrap;
+}
+
+.rb-btn-zoom {
+  padding: 6px 12px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.rb-btn-nav {
+  padding: 6px 12px;
+}
+
+.rb-btn-nav-lg {
+  padding: 8px 22px;
+  font-size: 0.78rem;
+  letter-spacing: 0.2em;
+}
+
+.rb-btn-dl {
+  color: #d4ff00;
+  border-color: rgba(212, 255, 0, 0.45);
+}
+.rb-btn-dl:hover:not(:disabled) {
+  background: rgba(212, 255, 0, 0.1);
+  border-color: #d4ff00;
+  box-shadow: 0 0 12px rgba(212, 255, 0, 0.3);
+}
+
+.rb-zoom-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.5);
+  min-width: 38px;
+  text-align: center;
+}
+
+.rb-page-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rb-page-input {
+  width: 44px;
+  background: rgba(183, 0, 255, 0.08);
+  border: 1px solid rgba(183, 0, 255, 0.4);
+  color: #b700ff;
+  font-family: inherit;
+  font-size: 0.8rem;
+  padding: 5px 6px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.rb-page-input::-webkit-inner-spin-button,
+.rb-page-input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.rb-page-input:focus { outline: none; border-color: #b700ff; }
+
+.rb-page-total {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+}
+
+/* ─── Stage ──────────────────────────────────────── */
+.rb-stage {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px;
+  background: #04000f;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(183, 0, 255, 0.3) transparent;
+  position: relative;
+}
+
+.rb-stage::-webkit-scrollbar { width: 6px; height: 6px; }
+.rb-stage::-webkit-scrollbar-thumb { background: rgba(183, 0, 255, 0.3); border-radius: 3px; }
+
+/* ─── Status screens ─────────────────────────────── */
+.rb-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 80px;
+}
+
+.rb-status-icon {
+  font-size: 2.5rem;
+}
+
+.rb-status-text {
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: rgba(183, 0, 255, 0.8);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.rb-error { color: #ff0080 !important; animation: none !important; }
+.rb-error-sub { font-size: 0.75rem; color: rgba(255, 255, 255, 0.4); letter-spacing: 0.08em; text-align: center; }
+
+@keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+.rb-loader {
+  width: 160px;
+  height: 2px;
+  background: rgba(183, 0, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+.rb-loader::after {
+  content: '';
+  position: absolute;
+  left: -40%;
+  top: 0;
+  width: 40%;
+  height: 100%;
+  background: #b700ff;
+  box-shadow: 0 0 8px #b700ff;
+  animation: rb-scan 1.2s ease-in-out infinite;
+}
+@keyframes rb-scan { 0% { left: -40%; } 100% { left: 100%; } }
+
+.rb-hidden { visibility: hidden; }
+
+/* ─── Document wrapper ───────────────────────────── */
+.rb-doc-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* Neon corner accents */
+.rb-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  z-index: 10;
+  pointer-events: none;
+}
+.rb-corner-tl { top: -8px; left: -8px; border-top: 2px solid #b700ff; border-left: 2px solid #b700ff; box-shadow: -2px -2px 8px rgba(183,0,255,0.5); }
+.rb-corner-tr { top: -8px; right: -8px; border-top: 2px solid #b700ff; border-right: 2px solid #b700ff; box-shadow: 2px -2px 8px rgba(183,0,255,0.5); }
+.rb-corner-bl { bottom: -8px; left: -8px; border-bottom: 2px solid #b700ff; border-left: 2px solid #b700ff; box-shadow: -2px 2px 8px rgba(183,0,255,0.5); }
+.rb-corner-br { bottom: -8px; right: -8px; border-bottom: 2px solid #b700ff; border-right: 2px solid #b700ff; box-shadow: 2px 2px 8px rgba(183,0,255,0.5); }
+
+/* ─── Page frame ─────────────────────────────────── */
+.rb-page-frame {
+  position: relative;
+  box-shadow:
+    0 0 0 1px rgba(183, 0, 255, 0.3),
+    0 0 30px rgba(183, 0, 255, 0.15),
+    0 0 80px rgba(183, 0, 255, 0.08);
+  display: inline-block;
+}
+
+/* Scanline overlay sits ON TOP of the PDF canvas (same origin = no restriction) */
+.rb-page-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Force react-pdf canvas to display-block (removes bottom gap) */
+.rb-page-frame canvas {
+  display: block !important;
+}
+
+/* ─── Footer nav ─────────────────────────────────── */
+.rb-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 24px;
+  border-top: 1px solid rgba(183, 0, 255, 0.2);
+  background: rgba(0, 0, 0, 0.6);
   flex-shrink: 0;
 }
 
-.rb-back-btn {
-  background: transparent;
-  border: 1px solid rgba(183,0,255,0.4);
-  color: #b700ff;
-  font-family: inherit;
-  font-size: 0.78rem;
-  letter-spacing: 0.12em;
-  padding: 8px 18px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.rb-back-btn:hover { background: rgba(183,0,255,0.1); border-color: #b700ff; }
-
-.rb-title {
-  font-size: 1.4rem;
-  font-weight: 900;
-  letter-spacing: 0.35em;
-  color: #b700ff;
-  text-shadow: 0 0 20px #b700ff;
-  margin: 0;
+.rb-progress-bar {
   flex: 1;
-}
-
-.rb-download-btn {
-  background: rgba(183,0,255,0.12);
-  border: 1px solid rgba(183,0,255,0.5);
-  color: #b700ff;
-  font-family: inherit;
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  padding: 8px 18px;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-.rb-download-btn:hover { background: rgba(183,0,255,0.22); }
-
-.rb-viewer {
-  flex: 1;
+  height: 3px;
+  background: rgba(183, 0, 255, 0.15);
+  border-radius: 2px;
   overflow: hidden;
 }
 
-.rb-iframe {
-  width: 100%;
+.rb-progress-fill {
   height: 100%;
-  border: none;
-  background: #fff;
+  background: linear-gradient(90deg, #b700ff, #ff0080);
+  box-shadow: 0 0 8px rgba(183, 0, 255, 0.6);
+  transition: width 0.3s ease;
+  border-radius: 2px;
 }
