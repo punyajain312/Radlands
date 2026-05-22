@@ -17,3 +17,6 @@ class Player(Base):
     games_won = Column(Integer, default=0, nullable=False, server_default="0")
     games_lost = Column(Integer, default=0, nullable=False, server_default="0")
     card_play_counts = Column(JSON, nullable=True)
+
+    # Rating — starts at 0 (SURVIVOR tier), ELO-style deltas, floor 0
+    rating = Column(Integer, default=0, nullable=False, server_default="0")

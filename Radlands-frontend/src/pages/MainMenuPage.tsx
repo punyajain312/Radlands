@@ -1,125 +1,284 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AuthState, Page } from '../App'
+import {
+  IconSword, IconBookOpen, IconUsers, IconHelpCircle,
+  IconTrophy, IconTarget, IconShield,
+} from '../components/Icons'
+import { getRankFromRating, rankProgress } from '../constants/ranks'
 import './MainMenuPage.css'
 
 interface Stats {
-  games_played: number
-  games_won: number
-  games_lost: number
-  win_rate: number
-  favorite_card: { name: string; type: string } | null
-  least_used_card: { name: string; type: string } | null
+  games_played: number; games_won: number; games_lost: number
+  win_rate: number; rating: number
 }
 
-interface MainMenuPageProps {
-  auth: AuthState
-  onLogout: () => void
-  onNavigate: (page: Page) => void
-}
-
-const MENU_ITEMS: { id: Page; label: string; sub: string; icon: string; color: string }[] = [
-  { id: 'play',      label: 'PLAY',         sub: 'Enter the wasteland',      icon: '⚔',  color: '#ff0080' },
-  { id: 'howtoplay', label: 'HOW TO PLAY',  sub: 'Learn the rules',          icon: '📖', color: '#ff6600' },
-  { id: 'rulebook',  label: 'RULEBOOK',     sub: 'Full official rulebook',   icon: '📋', color: '#b700ff' },
-  { id: 'friends',   label: 'FRIENDS',      sub: 'Manage your allies',       icon: '⚡', color: '#00e5ff' },
-  { id: 'profile',   label: 'PROFILE',      sub: 'Your battle record',       icon: '◈',  color: '#d4ff00' },
+const HERO_PHRASES = [
+  'WASTELAND AWAITS',
+  'BATTLE BEGINS NOW',
+  'CLAIM YOUR GLORY',
+  'FORGE YOUR LEGEND',
 ]
 
-export function MainMenuPage({ auth, onLogout, onNavigate }: MainMenuPageProps) {
-  const [stats, setStats] = useState<Stats | null>(null)
+const OPERATIONS = [
+  { id: 'play',      Icon: IconSword,      label: 'ENTER BATTLE',  sub: 'Engage in tactical combat',   accent: '#ff0080' },
+  { id: 'howtoplay', Icon: IconHelpCircle, label: 'HOW TO PLAY',   sub: 'Master the wasteland rules',  accent: '#ff6600' },
+  { id: 'friends',   Icon: IconUsers,      label: 'ALLIES',        sub: 'Manage your network',         accent: '#00e5ff' },
+  { id: 'rulebook',  Icon: IconBookOpen,   label: 'CODEX',         sub: 'Official rulebook archive',   accent: '#b700ff' },
+]
+
+function useTypewriter(phrases: string[]) {
+  const [display, setDisplay] = useState('')
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const s = useRef({ phraseIdx: 0, charIdx: 0, isDeleting: false })
 
   useEffect(() => {
-    fetch('/social/me/stats', {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => d && setStats(d))
-      .catch(() => {})
+    function tick() {
+      const { phraseIdx, charIdx, isDeleting } = s.current
+      const current = phrases[phraseIdx]
+
+      if (!isDeleting) {
+        if (charIdx < current.length) {
+          s.current.charIdx++
+          setDisplay(current.slice(0, s.current.charIdx))
+          timerRef.current = setTimeout(tick, 95)
+        } else {
+          // pause at full text, then start deleting
+          timerRef.current = setTimeout(() => {
+            s.current.isDeleting = true
+            tick()
+          }, 2400)
+        }
+      } else {
+        if (charIdx > 0) {
+          s.current.charIdx--
+          setDisplay(current.slice(0, s.current.charIdx))
+          timerRef.current = setTimeout(tick, 52)
+        } else {
+          // done deleting — move to next phrase
+          s.current.isDeleting = false
+          s.current.phraseIdx = (phraseIdx + 1) % phrases.length
+          timerRef.current = setTimeout(tick, 180)
+        }
+      }
+    }
+
+    tick()
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // run once on mount; phrases is module-level constant
+
+  return display
+}
+
+export function MainMenuPage({ auth, onLogout, onNavigate }: {
+  auth: AuthState; onLogout: () => void; onNavigate: (p: Page) => void
+}) {
+  const [stats, setStats] = useState<Stats | null>(null)
+  const heroText = useTypewriter(HERO_PHRASES)
+
+  useEffect(() => {
+    fetch('/social/me/stats', { headers: { Authorization: `Bearer ${auth.token}` } })
+      .then(r => r.ok ? r.json() : null).then(d => d && setStats(d)).catch(() => {})
   }, [auth.token])
 
-  const winRate = stats ? stats.win_rate : 0
-  const played = stats?.games_played ?? 0
-  const won = stats?.games_won ?? 0
-  const lost = stats?.games_lost ?? 0
+  const W      = stats?.games_won    ?? 0
+  const L      = stats?.games_lost   ?? 0
+  const P      = stats?.games_played ?? 0
+  const R      = stats?.win_rate     ?? 0
+  const rating = stats?.rating       ?? 0
+  const rank   = getRankFromRating(rating)
+  const pct    = rankProgress(rating)
 
   return (
     <div className="mm-root">
-      {/* Scanlines */}
+      <div className="mm-orb mm-orb-1" />
+      <div className="mm-orb mm-orb-2" />
       <div className="mm-scanlines" />
 
-      {/* Header */}
-      <header className="mm-header">
-        <div className="mm-logo">RADLANDS</div>
-        <div className="mm-header-right">
+      {/* ── Header bar ─────────────────────────────── */}
+      <header className="mm-bar">
+        <span className="mm-logo">RADLANDS</span>
+        <div className="mm-bar-stats">
+          <div className="mm-bar-stat">
+            <span className="mm-bar-stat-label">RATING</span>
+            <span className="mm-bar-stat-val">{rating}</span>
+          </div>
+          <div className="mm-bar-sep" />
+          <div className="mm-bar-stat">
+            <span className="mm-bar-stat-label">WINS</span>
+            <span className="mm-bar-stat-val" style={{ color: '#d4ff00' }}>{W}</span>
+          </div>
+          <div className="mm-bar-sep" />
+          <div className="mm-bar-stat">
+            <span className="mm-bar-stat-label">RANK</span>
+            <span className="mm-bar-stat-val" style={{ color: rank.color }}>{rank.name}</span>
+          </div>
+        </div>
+        <div className="mm-bar-right">
           <span className="mm-username">{auth.username}</span>
-          <button className="mm-logout-btn" onClick={onLogout}>EXIT</button>
+          <button className="mm-exit" onClick={onLogout}>EXIT</button>
         </div>
       </header>
 
-      {/* Hero strip */}
-      <section className="mm-hero">
-        <div className="mm-hero-text">
-          <span className="mm-hero-greeting">WELCOME BACK,</span>
-          <span className="mm-hero-name">{auth.username.toUpperCase()}</span>
-        </div>
+      {/* ── Main body ──────────────────────────────── */}
+      <div className="mm-body">
 
-        {/* Quick stats bar */}
-        <div className="mm-stats-bar">
-          <div className="mm-stat-pill mm-stat-played">
-            <span className="mm-stat-num">{played}</span>
-            <span className="mm-stat-label">PLAYED</span>
-          </div>
-          <div className="mm-stat-sep" />
-          <div className="mm-stat-pill mm-stat-won">
-            <span className="mm-stat-num">{won}</span>
-            <span className="mm-stat-label">WON</span>
-          </div>
-          <div className="mm-stat-sep" />
-          <div className="mm-stat-pill mm-stat-lost">
-            <span className="mm-stat-num">{lost}</span>
-            <span className="mm-stat-label">LOST</span>
-          </div>
-          <div className="mm-stat-sep" />
-          <div className="mm-stat-pill mm-stat-rate">
-            <span className="mm-stat-num">{winRate}%</span>
-            <span className="mm-stat-label">WIN RATE</span>
-          </div>
-          {stats?.favorite_card && (
-            <>
-              <div className="mm-stat-sep" />
-              <div className="mm-stat-pill mm-stat-fav">
-                <span className="mm-stat-num">{stats.favorite_card.name}</span>
-                <span className="mm-stat-label">FAVORITE</span>
+        {/* ── Hero ───────────────────────────────── */}
+        <div className="mm-hero">
+
+          {/* Left: text + stats + CTAs */}
+          <div className="mm-hero-left">
+            <p className="mm-hero-eyebrow">COMMAND CENTER ONLINE</p>
+            <h1 className="mm-hero-title">
+              {heroText}<span className="mm-cursor">_</span>
+            </h1>
+            <p className="mm-hero-desc">
+              Strategic conflicts across the barren frontier. Deploy your operatives,
+              claim territories, and dominate the post-apocalyptic wasteland.
+            </p>
+
+            <div className="mm-chips">
+              <div className="mm-chip mm-chip-blue">
+                <IconTrophy size={14} color="#00e5ff" />
+                <span className="mm-chip-val">{W}</span>
+                <span className="mm-chip-label">VICTORIES</span>
               </div>
-            </>
-          )}
+              <div className="mm-chip mm-chip-red">
+                <IconTarget size={14} color="#ff0080" />
+                <span className="mm-chip-val">{L}</span>
+                <span className="mm-chip-label">DEFEATS</span>
+              </div>
+              <div className="mm-chip mm-chip-yellow">
+                <IconShield size={14} color="#d4ff00" />
+                <span className="mm-chip-val">{R}%</span>
+                <span className="mm-chip-label">WIN RATE</span>
+              </div>
+            </div>
+
+            <div className="mm-cta-row">
+              <button className="mm-cta-primary" onClick={() => onNavigate('play')}>
+                <IconSword size={16} color="#08001a" />
+                START BATTLE
+              </button>
+              <button className="mm-cta-secondary" onClick={() => onNavigate('profile')}>
+                VIEW PROFILE
+              </button>
+            </div>
+          </div>
+
+          {/* Center: combat intel panel (large screens only) */}
+          <div className="mm-hero-center">
+            <div className="mm-center-inner">
+              <div className="mm-center-eyebrow">COMBAT INTEL</div>
+
+              <div className="mm-center-rank-wrap">
+                <div className="mm-center-rank-icon" style={{ borderColor: rank.color, boxShadow: `0 0 28px ${rank.color}35` }}>
+                  <IconShield size={48} color={rank.color} />
+                </div>
+                <div className="mm-center-rank-name" style={{ color: rank.color, textShadow: `0 0 16px ${rank.color}80` }}>
+                  {rank.name}
+                </div>
+                <div className="mm-center-rating">{rating} PTS</div>
+                <div className="mm-center-prog-track">
+                  <div className="mm-center-prog-fill" style={{ width: `${pct}%`, background: rank.color }} />
+                </div>
+                <div className="mm-center-prog-label">
+                  {rank.max !== Infinity ? `${rank.max - rating} pts to next rank` : 'MAX RANK ACHIEVED'}
+                </div>
+              </div>
+
+              <div className="mm-center-divider" />
+
+              <div className="mm-center-perf">
+                <div className="mm-perf-item">
+                  <span className="mm-perf-val" style={{ color: '#d4ff00' }}>{W}</span>
+                  <span className="mm-perf-label">WINS</span>
+                </div>
+                <div className="mm-perf-sep" />
+                <div className="mm-perf-item">
+                  <span className="mm-perf-val" style={{ color: '#ff6600' }}>{L}</span>
+                  <span className="mm-perf-label">LOSSES</span>
+                </div>
+                <div className="mm-perf-sep" />
+                <div className="mm-perf-item">
+                  <span className="mm-perf-val" style={{ color: '#00e5ff' }}>{P}</span>
+                  <span className="mm-perf-label">BATTLES</span>
+                </div>
+              </div>
+
+              <div className="mm-center-divider" />
+
+              <div className="mm-center-status">
+                <div className="mm-status-row"><span className="mm-sdot mm-sdot-green" />MATCHMAKING ONLINE</div>
+                <div className="mm-status-row"><span className="mm-sdot mm-sdot-green" />RATING TRACKING LIVE</div>
+                <div className="mm-status-row"><span className="mm-sdot mm-sdot-cyan" />COMBAT LOGS ACTIVE</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: operative card */}
+          <div className="mm-hero-right">
+            <div className="mm-operative-card">
+              <div className="mm-op-corner mm-op-corner-tl" />
+              <div className="mm-op-corner mm-op-corner-tr" />
+              <div className="mm-op-corner mm-op-corner-bl" />
+              <div className="mm-op-corner mm-op-corner-br" />
+
+              <div className="mm-op-icon-wrap">
+                <IconSwords size={44} color="#ff0080" />
+              </div>
+              <div className="mm-op-name">{auth.username.toUpperCase()}</div>
+              <div className="mm-op-rank" style={{ color: rank.color }}>{rank.name} OPERATIVE</div>
+              <p className="mm-op-flavor">{rank.description}</p>
+              <div className="mm-op-footer">
+                <span className="mm-op-footer-label">BATTLE RECORD</span>
+                <span className="mm-op-footer-val">{W}W · {L}L · {R}%WR</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      {/* Menu grid */}
-      <nav className="mm-grid">
-        {MENU_ITEMS.map(item => (
-          <button
-            key={item.id}
-            className="mm-card"
-            style={{ '--card-accent': item.color } as React.CSSProperties}
-            onClick={() => onNavigate(item.id)}
-          >
-            <span className="mm-card-icon">{item.icon}</span>
-            <span className="mm-card-label">{item.label}</span>
-            <span className="mm-card-sub">{item.sub}</span>
-            <div className="mm-card-glow" />
-          </button>
-        ))}
-      </nav>
-
-      {/* Bottom dunes */}
-      <svg className="mm-dunes" viewBox="0 0 1200 100" preserveAspectRatio="none">
-        <path
-          d="M0 100 L0 55 Q120 10 240 45 Q360 78 480 30 Q600 0 720 38 Q840 72 960 20 Q1080 0 1200 42 L1200 100 Z"
-          fill="#08001a"
-        />
-      </svg>
+        {/* ── Operations strip ─────────────────────── */}
+        <div className="mm-ops-section">
+          <div className="mm-ops-header">
+            <div className="mm-ops-divider-line" />
+            <span className="mm-ops-label">AVAILABLE OPERATIONS</span>
+            <div className="mm-ops-divider-line" />
+          </div>
+          <div className="mm-ops-grid">
+            {OPERATIONS.map(op => (
+              <button
+                key={op.id}
+                className="mm-op-btn"
+                style={{ '--oa': op.accent } as React.CSSProperties}
+                onClick={() => onNavigate(op.id as Page)}
+              >
+                <div className="mm-op-btn-glow" />
+                <op.Icon size={26} color={op.accent} />
+                <span className="mm-op-btn-label">{op.label}</span>
+                <span className="mm-op-btn-sub">{op.sub}</span>
+                <div className="mm-op-btn-bar" />
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
+  )
+}
+
+function IconSwords({ size, color }: { size?: number; color?: string }) {
+  return (
+    <svg width={size ?? 20} height={size ?? 20} viewBox="0 0 24 24" fill="none"
+         stroke={color ?? 'currentColor'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5" />
+      <line x1="13" y1="19" x2="19" y2="13" />
+      <line x1="16" y1="16" x2="20" y2="20" />
+      <line x1="19" y1="21" x2="21" y2="19" />
+      <polyline points="9.5 6.5 21 18 21 21 18 21 6.5 9.5" />
+      <line x1="11" y1="5" x2="5" y2="11" />
+      <line x1="8" y1="8" x2="4" y2="4" />
+      <line x1="5" y1="5" x2="3" y2="3" />
+    </svg>
   )
 }

@@ -1,0 +1,41 @@
+.sk-root {
+  position: fixed; inset: 0;
+  background: #08001a;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Courier New', monospace;
+}
+
+.sk-scanlines {
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.06) 2px, rgba(0,0,0,.06) 4px);
+}
+
+.sk-center {
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+
+.sk-logo {
+  font-size: 2.4rem; font-weight: 900; letter-spacing: .42em;
+  color: #ff0080;
+  text-shadow: 0 0 24px #ff0080, 0 0 60px rgba(255,0,128,.4);
+  animation: sk-pulse 1.8s ease-in-out infinite;
+}
+@keyframes sk-pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+
+.sk-loader-track {
+  width: 220px; height: 2px;
+  background: rgba(255,0,128,.12);
+  overflow: hidden;
+}
+.sk-loader-fill {
+  height: 100%; width: 40%;
+  background: #ff0080;
+  box-shadow: 0 0 8px #ff0080;
+  animation: sk-scan 1.4s ease-in-out infinite;
+}
+@keyframes sk-scan { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
+
+.sk-label {
+  font-size: .6rem; letter-spacing: .38em;
+  color: rgba(255,0,128,.4);
+}

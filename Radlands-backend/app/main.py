@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from app.db.database import engine, Base
+from app.models import challenge as _challenge_model  # noqa: F401 — registers GameChallenge with Base
 from app.routes import auth_routes
 from app.routes.game_routes import router as game_router
 from app.routes.ws_routes import ws_router

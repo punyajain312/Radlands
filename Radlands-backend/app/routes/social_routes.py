@@ -1,9 +1,13 @@
+from typing import Optional
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session # type: ignore
+from pydantic import BaseModel  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
 from app.db.dependencies import get_db
 from app.models.player import Player
 from app.models.friend import FriendRequest
 from app.models.card import Card
+from app.models.challenge import GameChallenge
 from app.core.auth_deps import get_current_player_id
 
 router = APIRouter(prefix="/social", tags=["Social"])
@@ -56,6 +60,7 @@ def get_my_stats(
         "games_won": games_won,
         "games_lost": games_lost,
         "win_rate": win_rate,
+        "rating": player.rating if player.rating is not None else 0,
         "favorite_card": favorite_card,
         "least_used_card": least_used_card,
         "card_play_counts": counts,
@@ -202,6 +207,51 @@ def reject_friend_request(
     return {"message": "Friend request rejected"}
 
 
+# ─── Rank definitions (static) ───────────────────────────────────────────────
+
+RANK_TIERS = [
+    {"tier": 1,  "name": "SURVIVOR",        "min": 0,    "max": 299,  "color": "#808080"},
+    {"tier": 2,  "name": "SCAVENGER",       "min": 300,  "max": 549,  "color": "#a08060"},
+    {"tier": 3,  "name": "WANDERER",        "min": 550,  "max": 799,  "color": "#00e5ff"},
+    {"tier": 4,  "name": "RAIDER",          "min": 800,  "max": 1049, "color": "#d4ff00"},
+    {"tier": 5,  "name": "MARAUDER",        "min": 1050, "max": 1299, "color": "#ff6600"},
+    {"tier": 6,  "name": "ENFORCER",        "min": 1300, "max": 1549, "color": "#ff0080"},
+    {"tier": 7,  "name": "WARLORD",         "min": 1550, "max": 1799, "color": "#b700ff"},
+    {"tier": 8,  "name": "OVERLORD",        "min": 1800, "max": 2099, "color": "#ff2200"},
+    {"tier": 9,  "name": "DUNE MASTER",     "min": 2100, "max": 2399, "color": "#ffd700"},
+    {"tier": 10, "name": "APOCALYPSE LORD", "min": 2400, "max": None, "color": "#ff0000"},
+]
+
+
+@router.get("/ranks")
+def get_ranks():
+    return RANK_TIERS
+
+
+# ─── Leaderboard ─────────────────────────────────────────────────────────────
+
+@router.get("/leaderboard")
+def get_leaderboard(db: Session = Depends(get_db)):
+    top = (
+        db.query(Player)
+        .order_by(Player.games_won.desc())
+        .limit(5)
+        .all()
+    )
+    return [
+        {
+            "rank": i + 1,
+            "username": p.username,
+            "games_won": p.games_won or 0,
+            "games_played": p.games_played or 0,
+            "rating": p.rating if p.rating is not None else 0,
+        }
+        for i, p in enumerate(top)
+    ]
+
+
+# ─── Friends ──────────────────────────────────────────────────────────────────
+
 @router.get("/friends")
 def get_friends(
     current_player_id: int = Depends(get_current_player_id),
@@ -225,3 +275,143 @@ def get_friends(
             })
 
     return friends
+
+
+# ─── Game Challenges ──────────────────────────────────────────────────────────
+
+class ChallengeCreate(BaseModel):
+    challenged_id: int
+    scheduled_at: Optional[datetime] = None
+    message: Optional[str] = None
+
+
+@router.post("/challenges")
+def send_challenge(
+    body: ChallengeCreate,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    if body.challenged_id == current_player_id:
+        raise HTTPException(status_code=400, detail="Cannot challenge yourself")
+
+    challenged = db.query(Player).filter(Player.id == body.challenged_id).first()
+    if not challenged:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    # Must be friends
+    friendship = db.query(FriendRequest).filter(
+        (
+            ((FriendRequest.sender_id == current_player_id) & (FriendRequest.receiver_id == body.challenged_id))
+            | ((FriendRequest.sender_id == body.challenged_id) & (FriendRequest.receiver_id == current_player_id))
+        ),
+        FriendRequest.status == "accepted",
+    ).first()
+    if not friendship:
+        raise HTTPException(status_code=403, detail="You can only challenge your allies")
+
+    # Check no pending challenge already exists in either direction
+    existing = db.query(GameChallenge).filter(
+        (
+            ((GameChallenge.challenger_id == current_player_id) & (GameChallenge.challenged_id == body.challenged_id))
+            | ((GameChallenge.challenger_id == body.challenged_id) & (GameChallenge.challenged_id == current_player_id))
+        ),
+        GameChallenge.status == "pending",
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="A pending challenge already exists with this player")
+
+    challenge = GameChallenge(
+        challenger_id=current_player_id,
+        challenged_id=body.challenged_id,
+        scheduled_at=body.scheduled_at,
+        message=body.message,
+    )
+    db.add(challenge)
+    db.commit()
+    db.refresh(challenge)
+    return {"message": "Challenge sent", "challenge_id": challenge.id}
+
+
+@router.get("/challenges")
+def get_challenges(
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    incoming_rows = db.query(GameChallenge).filter(
+        GameChallenge.challenged_id == current_player_id,
+        GameChallenge.status == "pending",
+    ).all()
+    outgoing_rows = db.query(GameChallenge).filter(
+        GameChallenge.challenger_id == current_player_id,
+        GameChallenge.status == "pending",
+    ).all()
+
+    def _enrich(c: GameChallenge, other_id: int):
+        other = db.query(Player).filter(Player.id == other_id).first()
+        return {
+            "challenge_id": c.id,
+            "user_id": other_id,
+            "username": other.username if other else f"Player #{other_id}",
+            "scheduled_at": c.scheduled_at.isoformat() if c.scheduled_at else None,
+            "message": c.message,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+        }
+
+    return {
+        "incoming": [_enrich(c, c.challenger_id) for c in incoming_rows],
+        "outgoing": [_enrich(c, c.challenged_id) for c in outgoing_rows],
+    }
+
+
+@router.post("/challenges/{challenge_id}/accept")
+def accept_challenge(
+    challenge_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    challenge = db.query(GameChallenge).filter(
+        GameChallenge.id == challenge_id,
+        GameChallenge.challenged_id == current_player_id,
+        GameChallenge.status == "pending",
+    ).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    challenge.status = "accepted"
+    db.commit()
+    return {"message": "Challenge accepted"}
+
+
+@router.post("/challenges/{challenge_id}/decline")
+def decline_challenge(
+    challenge_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    challenge = db.query(GameChallenge).filter(
+        GameChallenge.id == challenge_id,
+        GameChallenge.challenged_id == current_player_id,
+        GameChallenge.status == "pending",
+    ).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found")
+    challenge.status = "declined"
+    db.commit()
+    return {"message": "Challenge declined"}
+
+
+@router.delete("/challenges/{challenge_id}")
+def cancel_challenge(
+    challenge_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    challenge = db.query(GameChallenge).filter(
+        GameChallenge.id == challenge_id,
+        GameChallenge.challenger_id == current_player_id,
+        GameChallenge.status == "pending",
+    ).first()
+    if not challenge:
+        raise HTTPException(status_code=404, detail="Challenge not found or not yours")
+    challenge.status = "cancelled"
+    db.commit()
+    return {"message": "Challenge cancelled"}

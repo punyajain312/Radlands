@@ -1,0 +1,50 @@
+.bgs-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.bgs-orb {
+  position: absolute;
+  top: -200px; left: 50%; transform: translateX(-50%);
+  width: 700px; height: 700px; border-radius: 50%;
+  animation: bgs-pulse 7s ease-in-out infinite;
+}
+@keyframes bgs-pulse { 0%,100%{opacity:.55;transform:translateX(-50%) scale(1)} 50%{opacity:1;transform:translateX(-50%) scale(1.1)} }
+
+.bgs-star {
+  position: absolute; border-radius: 50%; background: #fff;
+  animation: bgs-twinkle 3s ease-in-out infinite;
+}
+@keyframes bgs-twinkle { 0%,100%{opacity:.15} 50%{opacity:.9} }
+
+.bgs-grid { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; }
+
+.bgs-dunes { position: absolute; bottom: 0; left: 0; width: 100%; height: 160px; }
+.bgs-ground { position: absolute; bottom: 0; left: 0; right: 0; height: 20px; background: #08001a; }
+
+.bgs-fire { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); }
+.bgs-flame {
+  position: absolute; bottom: 8px; border-radius: 50% 50% 20% 20%;
+  filter: blur(2px); mix-blend-mode: screen;
+  animation: bgs-flicker .15s infinite alternate;
+}
+.bgs-fl1 { width:10px;height:22px;left:4px;  background:#fff;    animation-duration:.12s }
+.bgs-fl2 { width:14px;height:30px;left:1px;  background:#ff6600; animation-duration:.17s }
+.bgs-fl3 { width:18px;height:38px;left:-1px; background:#ff0080; animation-duration:.13s }
+@keyframes bgs-flicker { 0%{transform:scaleX(1) scaleY(1)} 100%{transform:scaleX(.9) scaleY(1.06) skewX(2deg)} }
+.bgs-fire-base { width:22px;height:6px;background:#1a0030;border-radius:50%;margin-top:2px; }
+
+.bgs-spark {
+  position: absolute; bottom: 26px;
+  width:var(--size); height:var(--size); border-radius:50%;
+  background:var(--clr); box-shadow:0 0 4px var(--clr);
+  animation: bgs-fly var(--dur) var(--delay) ease-out infinite;
+}
+@keyframes bgs-fly { 0%{opacity:1;transform:translate(0,0) scale(1)} 100%{opacity:0;transform:translate(var(--drift),-110px) scale(.2)} }
+
+.bgs-scanlines {
+  position: absolute; inset: 0; z-index: 1;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px);
+}

@@ -122,18 +122,33 @@ def _finish_game(game: Game, result: dict) -> None:
     game.winner_id = result.get("winner_id")
 
 
+def _elo_delta(player_rating: int, opponent_rating: int, won: bool) -> int:
+    """ELO rating change — K=32, standard formula, floor at 0."""
+    K = 32
+    expected = 1 / (1 + 10 ** ((opponent_rating - player_rating) / 400))
+    delta = K * (1 - expected) if won else K * (0 - expected)
+    return round(delta)
+
+
 def _update_player_stats(db: Session, game: Game) -> None:
     winner_id = game.winner_id
     p1 = db.query(Player).filter(Player.id == game.player1_id).first()
     p2 = db.query(Player).filter(Player.id == game.player2_id).first()
-    for player in (p1, p2):
-        if not player:
-            continue
+    if not p1 or not p2:
+        return
+
+    r1 = p1.rating if p1.rating is not None else 0
+    r2 = p2.rating if p2.rating is not None else 0
+
+    for player, opponent_rating in ((p1, r2), (p2, r1)):
         player.games_played = (player.games_played or 0) + 1
+        current = player.rating if player.rating is not None else 0
         if winner_id and player.id == winner_id:
             player.games_won = (player.games_won or 0) + 1
+            player.rating = current + _elo_delta(current, opponent_rating, True)
         elif winner_id:
             player.games_lost = (player.games_lost or 0) + 1
+            player.rating = max(0, current + _elo_delta(current, opponent_rating, False))
     db.flush()
 
 
