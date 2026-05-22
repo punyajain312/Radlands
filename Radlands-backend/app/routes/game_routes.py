@@ -122,6 +122,33 @@ def _finish_game(game: Game, result: dict) -> None:
     game.winner_id = result.get("winner_id")
 
 
+def _update_player_stats(db: Session, game: Game) -> None:
+    winner_id = game.winner_id
+    p1 = db.query(Player).filter(Player.id == game.player1_id).first()
+    p2 = db.query(Player).filter(Player.id == game.player2_id).first()
+    for player in (p1, p2):
+        if not player:
+            continue
+        player.games_played = (player.games_played or 0) + 1
+        if winner_id and player.id == winner_id:
+            player.games_won = (player.games_won or 0) + 1
+        elif winner_id:
+            player.games_lost = (player.games_lost or 0) + 1
+    db.flush()
+
+
+def _record_card_play(db: Session, player_id: int, card_id: int) -> None:
+    player = db.query(Player).filter(Player.id == player_id).first()
+    if not player:
+        return
+    counts: dict = player.card_play_counts or {}
+    key = str(card_id)
+    counts[key] = counts.get(key, 0) + 1
+    player.card_play_counts = counts
+    flag_modified(player, "card_play_counts")
+    db.flush()
+
+
 async def _broadcast(game: Game, state: dict) -> None:
     await manager.broadcast(game.id, {
         "type": "game_state",
@@ -322,6 +349,7 @@ async def play_person(
     # Deduct cost and place
     player["water"] -= water_cost
     player["hand"].remove(request.card_id)
+    _record_card_play(db, current_player_id, request.card_id)
 
     person_state = {"card_id": card.id, "damage": 0, "ready": False}
     player["columns"][col_idx].append(person_state)
@@ -409,6 +437,7 @@ async def activate_ability(
     result = check_game_end(state, game)
     if result["game_over"]:
         _finish_game(game, result)
+        _update_player_stats(db, game)
 
     _save_state(db, game, game_state, state)
     await _broadcast(game, state)
@@ -491,6 +520,7 @@ async def activate_camp(
     result = check_game_end(state, game)
     if result["game_over"]:
         _finish_game(game, result)
+        _update_player_stats(db, game)
 
     _save_state(db, game, game_state, state)
     await _broadcast(game, state)
@@ -534,6 +564,7 @@ async def junk_card(
     # Remove from hand and add to discard first
     player["hand"].remove(request.card_id)
     player["discard"].append(request.card_id)
+    _record_card_play(db, current_player_id, request.card_id)
 
     opponent_id = _opponent_id(game, current_player_id)
 
@@ -544,6 +575,7 @@ async def junk_card(
     result = check_game_end(state, game)
     if result["game_over"]:
         _finish_game(game, result)
+        _update_player_stats(db, game)
 
     _save_state(db, game, game_state, state)
     await _broadcast(game, state)
@@ -593,6 +625,7 @@ async def play_event(
     player["water"] -= water_cost
     player["hand"].remove(request.card_id)
     player["events"][slot] = {"card_id": request.card_id, "turns_remaining": fuse}
+    _record_card_play(db, current_player_id, request.card_id)
 
     _save_state(db, game, game_state, state)
     await _broadcast(game, state)

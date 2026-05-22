@@ -1,0 +1,66 @@
+.rb-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #08001a;
+  font-family: 'Courier New', monospace;
+}
+
+.rb-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 28px;
+  border-bottom: 1px solid rgba(183, 0, 255, 0.35);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  flex-shrink: 0;
+}
+
+.rb-back-btn {
+  background: transparent;
+  border: 1px solid rgba(183,0,255,0.4);
+  color: #b700ff;
+  font-family: inherit;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rb-back-btn:hover { background: rgba(183,0,255,0.1); border-color: #b700ff; }
+
+.rb-title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: #b700ff;
+  text-shadow: 0 0 20px #b700ff;
+  margin: 0;
+  flex: 1;
+}
+
+.rb-download-btn {
+  background: rgba(183,0,255,0.12);
+  border: 1px solid rgba(183,0,255,0.5);
+  color: #b700ff;
+  font-family: inherit;
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  padding: 8px 18px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.rb-download-btn:hover { background: rgba(183,0,255,0.22); }
+
+.rb-viewer {
+  flex: 1;
+  overflow: hidden;
+}
+
+.rb-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}

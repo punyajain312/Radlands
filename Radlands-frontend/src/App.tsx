@@ -1,44 +1,70 @@
 import { useState, useEffect } from 'react'
 import { LoginPage } from './pages/LoginPage'
+import { MainMenuPage } from './pages/MainMenuPage'
+import { FriendsPage } from './pages/FriendsPage'
+import { RulebookPage } from './pages/RulebookPage'
+import { HowToPlayPage } from './pages/HowToPlayPage'
+import { ProfilePage } from './pages/ProfilePage'
 
-interface AuthState {
+export interface AuthState {
   token: string
   userId: number
+  username: string
 }
+
+export type Page = 'menu' | 'friends' | 'rulebook' | 'howtoplay' | 'profile' | 'play'
 
 function App() {
   const [auth, setAuth] = useState<AuthState | null>(null)
+  const [page, setPage] = useState<Page>('menu')
 
   useEffect(() => {
     const token = localStorage.getItem('radlands_token')
     const userId = localStorage.getItem('radlands_user_id')
-    if (token && userId) {
-      setAuth({ token, userId: Number(userId) })
+    const username = localStorage.getItem('radlands_username')
+    if (token && userId && username) {
+      setAuth({ token, userId: Number(userId), username })
     }
   }, [])
 
-  function handleLogin(token: string, userId: number) {
+  function handleLogin(token: string, userId: number, username: string) {
     localStorage.setItem('radlands_token', token)
     localStorage.setItem('radlands_user_id', String(userId))
-    setAuth({ token, userId })
+    localStorage.setItem('radlands_username', username)
+    setAuth({ token, userId, username })
+    setPage('menu')
   }
 
   function handleLogout() {
     localStorage.removeItem('radlands_token')
     localStorage.removeItem('radlands_user_id')
+    localStorage.removeItem('radlands_username')
     setAuth(null)
+    setPage('menu')
   }
 
   if (!auth) {
     return <LoginPage onLogin={handleLogin} />
   }
 
-  return (
-    <div style={{ padding: 32, color: '#d4965a' }}>
-      <h2>Welcome, player #{auth.userId}</h2>
-      <button onClick={handleLogout}>Log out</button>
-    </div>
-  )
+  switch (page) {
+    case 'friends':
+      return <FriendsPage auth={auth} onBack={() => setPage('menu')} />
+    case 'rulebook':
+      return <RulebookPage onBack={() => setPage('menu')} />
+    case 'howtoplay':
+      return <HowToPlayPage onBack={() => setPage('menu')} />
+    case 'profile':
+      return <ProfilePage auth={auth} onBack={() => setPage('menu')} />
+    default:
+      return (
+        <MainMenuPage
+          auth={auth}
+          onLogout={handleLogout}
+          onNavigate={setPage}
+        />
+      )
+  }
 }
 
 export default App

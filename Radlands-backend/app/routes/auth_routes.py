@@ -9,10 +9,12 @@ from app.models.player import Player
 from app.models.game import Game
 from app.schemas.auth import RegisterRequest, LoginRequest, DeleteRequest, GoogleLoginRequest, TokenResponse
 from app.core.security import hash_password, verify_password, create_access_token
+from app.core.auth_deps import get_current_player_id
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
 def _slugify(name: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_]", "", name.replace(" ", "_")) or "user"
 
@@ -45,7 +47,11 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    return TokenResponse(access_token=create_access_token(user.id), user_id=user.id)
+    return TokenResponse(
+        access_token=create_access_token(user.id),
+        user_id=user.id,
+        username=user.username,
+    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -55,7 +61,30 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     if not user or not verify_password(request.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return TokenResponse(access_token=create_access_token(user.id), user_id=user.id)
+    return TokenResponse(
+        access_token=create_access_token(user.id),
+        user_id=user.id,
+        username=user.username,
+    )
+
+
+@router.get("/me")
+def get_me(
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    player = db.query(Player).filter(Player.id == current_player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+    return {
+        "user_id": player.id,
+        "username": player.username,
+        "email": player.email,
+        "games_played": player.games_played or 0,
+        "games_won": player.games_won or 0,
+        "games_lost": player.games_lost or 0,
+        "card_play_counts": player.card_play_counts or {},
+    }
 
 
 @router.post("/delete")
@@ -72,10 +101,7 @@ def delete(request: DeleteRequest, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
 
-    return {
-        "message": "User deleted",
-        "user_id": user.id
-    }
+    return {"message": "User deleted", "user_id": user.id}
 
 
 @router.post("/google", response_model=TokenResponse)
@@ -99,7 +125,6 @@ def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
     user = db.query(Player).filter(Player.google_id == google_id).first()
 
     if not user:
-        # Try to link by email if the account already exists
         user = db.query(Player).filter(Player.email == email).first()
         if user:
             user.google_id = google_id
@@ -116,4 +141,8 @@ def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    return TokenResponse(access_token=create_access_token(user.id), user_id=user.id)
+    return TokenResponse(
+        access_token=create_access_token(user.id),
+        user_id=user.id,
+        username=user.username,
+    )

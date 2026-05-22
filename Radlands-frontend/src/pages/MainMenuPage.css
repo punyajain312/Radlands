@@ -1,0 +1,219 @@
+/* ── root ────────────────────────────────────────── */
+.mm-root {
+  position: relative;
+  min-height: 100vh;
+  background: radial-gradient(ellipse 120% 60% at 50% 0%, #1a003a 0%, #08001a 60%, #000 100%);
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+}
+
+/* scanlines */
+.mm-scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.06) 2px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* ── header ─────────────────────────────────────── */
+.mm-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 36px;
+  border-bottom: 1px solid rgba(255, 0, 128, 0.25);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.mm-logo {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.35em;
+  color: #ff0080;
+  text-shadow: 0 0 18px #ff0080, 0 0 40px rgba(255, 0, 128, 0.5);
+}
+
+.mm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.mm-username {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: #00e5ff;
+  text-shadow: 0 0 10px #00e5ff;
+}
+
+.mm-logout-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 0, 128, 0.5);
+  color: #ff0080;
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  padding: 6px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mm-logout-btn:hover {
+  background: rgba(255, 0, 128, 0.12);
+  border-color: #ff0080;
+  box-shadow: 0 0 12px rgba(255, 0, 128, 0.4);
+}
+
+/* ── hero ───────────────────────────────────────── */
+.mm-hero {
+  padding: 40px 36px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.mm-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mm-hero-greeting {
+  font-size: 0.8rem;
+  letter-spacing: 0.3em;
+  color: rgba(212, 255, 0, 0.7);
+}
+
+.mm-hero-name {
+  font-size: 2.4rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #fff;
+  text-shadow: 0 0 30px rgba(255, 0, 128, 0.6);
+}
+
+/* ── stats bar ──────────────────────────────────── */
+.mm-stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
+.mm-stat-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 22px;
+  gap: 2px;
+}
+
+.mm-stat-sep {
+  width: 1px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.mm-stat-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.mm-stat-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  opacity: 0.6;
+  color: #fff;
+}
+
+.mm-stat-played .mm-stat-num { color: #fff; }
+.mm-stat-won .mm-stat-num    { color: #d4ff00; text-shadow: 0 0 10px #d4ff00; }
+.mm-stat-lost .mm-stat-num   { color: #ff0080; text-shadow: 0 0 10px #ff0080; }
+.mm-stat-rate .mm-stat-num   { color: #00e5ff; text-shadow: 0 0 10px #00e5ff; }
+.mm-stat-fav .mm-stat-num    { color: #ff6600; font-size: 0.85rem; text-shadow: 0 0 8px #ff6600; }
+
+/* ── menu grid ──────────────────────────────────── */
+.mm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 12px 36px 60px;
+  max-width: 1100px;
+}
+
+.mm-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 28px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 2px solid var(--card-accent);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: all 0.22s ease;
+  overflow: hidden;
+}
+
+.mm-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--card-accent);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px color-mix(in srgb, var(--card-accent) 25%, transparent);
+}
+
+.mm-card-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--card-accent) 10%, transparent), transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.22s;
+}
+.mm-card:hover .mm-card-glow { opacity: 1; }
+
+.mm-card-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+
+.mm-card-label {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+  color: var(--card-accent);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--card-accent) 60%, transparent);
+}
+
+.mm-card-sub {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── dunes ──────────────────────────────────────── */
+.mm-dunes {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  pointer-events: none;
+  z-index: 0;
+}

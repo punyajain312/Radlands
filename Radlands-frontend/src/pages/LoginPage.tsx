@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import './LoginPage.css'
 
 interface LoginPageProps {
-  onLogin: (token: string, userId: number) => void
+  onLogin: (token: string, userId: number, username: string) => void
 }
 
 type Mode = 'login' | 'register'
@@ -213,7 +213,7 @@ function LoginForm({
   onLogin,
   onSwitch,
 }: {
-  onLogin: (t: string, id: number) => void
+  onLogin: (t: string, id: number, username: string) => void
   onSwitch: () => void
 }) {
   const [username, setUsername] = useState('')
@@ -233,7 +233,7 @@ function LoginForm({
       })
       const data = await res.json()
       if (!res.ok) { setError(data.detail ?? 'Login failed'); return }
-      onLogin(data.access_token, data.user_id)
+      onLogin(data.access_token, data.user_id, data.username)
     } catch {
       setError('Cannot reach server — is the backend running?')
     } finally {
@@ -287,7 +287,7 @@ function RegisterForm({
   onLogin,
   onSwitch,
 }: {
-  onLogin: (t: string, id: number) => void
+  onLogin: (t: string, id: number, username: string) => void
   onSwitch: () => void
 }) {
   const [username, setUsername] = useState('')
@@ -310,7 +310,7 @@ function RegisterForm({
       })
       const data = await res.json()
       if (!res.ok) { setError(data.detail ?? 'Registration failed'); return }
-      onLogin(data.access_token, data.user_id)
+      onLogin(data.access_token, data.user_id, data.username)
     } catch {
       setError('Cannot reach server — is the backend running?')
     } finally {
