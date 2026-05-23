@@ -5,7 +5,7 @@ import {
   IconSword, IconBookOpen, IconUsers, IconHelpCircle,
   IconTrophy, IconTarget, IconShield,
 } from '../components/Icons'
-import { getRankFromRating, rankProgress } from '../constants/ranks'
+import { getRankFromRating } from '../constants/ranks'
 import './MainMenuPage.css'
 
 interface Stats {
@@ -84,8 +84,10 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
 
   const W      = stats?.games_won    ?? 0
   const L      = stats?.games_lost   ?? 0
+  const R      = stats?.win_rate     ?? 0
   const rating = stats?.rating       ?? 0
   const rank   = getRankFromRating(rating)
+
 
   return (
     <div className="mm-root">
