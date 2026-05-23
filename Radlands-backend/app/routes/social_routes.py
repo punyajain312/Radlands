@@ -8,7 +8,9 @@ from app.models.player import Player
 from app.models.friend import FriendRequest
 from app.models.card import Card
 from app.models.challenge import GameChallenge
+from app.models.game import Game
 from app.core.auth_deps import get_current_player_id
+from app.core.game_initializer import initialize_game_state
 
 router = APIRouter(prefix="/social", tags=["Social"])
 
@@ -377,8 +379,21 @@ def accept_challenge(
     if not challenge:
         raise HTTPException(status_code=404, detail="Challenge not found")
     challenge.status = "accepted"
+    db.flush()
+
+    game = Game(
+        player1_id=challenge.challenger_id,
+        player2_id=challenge.challenged_id,
+        status="initializing",
+    )
+    db.add(game)
+    db.flush()
+    db.refresh(game)
+
+    initialize_game_state(db, game)
+
     db.commit()
-    return {"message": "Challenge accepted"}
+    return {"message": "Challenge accepted", "game_id": game.id}
 
 
 @router.post("/challenges/{challenge_id}/decline")

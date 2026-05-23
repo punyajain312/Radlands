@@ -1,0 +1,131 @@
+.lobby-root {
+  min-height: 100vh;
+  background: #08001a;
+  color: #e0d0ff;
+  font-family: 'Courier New', monospace;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.lobby-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid #3d1a6e;
+  padding-bottom: 16px;
+}
+
+.lobby-back {
+  background: none;
+  border: 1px solid #3d1a6e;
+  color: #9b6dff;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.lobby-back:hover { border-color: #9b6dff; }
+
+.lobby-title {
+  font-size: 20px;
+  letter-spacing: 3px;
+  color: #ff0080;
+  text-shadow: 0 0 12px #ff008066;
+  margin: 0;
+}
+
+.lobby-section { display: flex; flex-direction: column; gap: 12px; }
+
+.lobby-section-title {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #9b6dff;
+  text-transform: uppercase;
+}
+
+.lobby-empty {
+  color: #4a3060;
+  font-size: 13px;
+  padding: 12px 0;
+}
+
+.lobby-card {
+  background: #0f002e;
+  border: 1px solid #3d1a6e;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lobby-card-info { display: flex; flex-direction: column; gap: 4px; }
+.lobby-card-name { font-size: 14px; color: #e0d0ff; }
+.lobby-card-meta { font-size: 11px; color: #6b4a9b; letter-spacing: 1px; }
+
+.lobby-card-actions { display: flex; gap: 8px; }
+
+.btn-primary {
+  background: #ff0080;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+  font-weight: bold;
+}
+.btn-primary:hover { background: #ff3399; }
+
+.btn-secondary {
+  background: none;
+  border: 1px solid #9b6dff;
+  color: #9b6dff;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.btn-secondary:hover { border-color: #d4ff00; color: #d4ff00; }
+
+.btn-danger {
+  background: none;
+  border: 1px solid #ff4444;
+  color: #ff4444;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+.btn-danger:hover { background: #ff444422; }
+
+.status-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  letter-spacing: 1px;
+  border-radius: 2px;
+}
+.status-active { background: #00ff8822; color: #00ff88; border: 1px solid #00ff8844; }
+.status-waiting { background: #ffaa0022; color: #ffaa00; border: 1px solid #ffaa0044; }
+.status-your-turn { background: #ff008022; color: #ff0080; border: 1px solid #ff008044; }
+
+.lobby-spinner {
+  color: #9b6dff;
+  font-size: 13px;
+  padding: 20px 0;
+  letter-spacing: 2px;
+}
+
+.lobby-error {
+  background: #2a0010;
+  border: 1px solid #ff004466;
+  color: #ff6688;
+  padding: 10px 14px;
+  font-size: 13px;
+}

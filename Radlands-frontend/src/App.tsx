@@ -3,13 +3,15 @@ import {
   BrowserRouter, Routes, Route, Navigate,
   useNavigate, useLocation,
 } from 'react-router-dom'
-import { LoginPage }     from './pages/LoginPage'
-import { MainMenuPage }  from './pages/MainMenuPage'
-import { FriendsPage }   from './pages/FriendsPage'
-import { RulebookPage }  from './pages/RulebookPage'
-import { HowToPlayPage } from './pages/HowToPlayPage'
-import { ProfilePage }   from './pages/ProfilePage'
-import { ChallengePage } from './pages/ChallengePage'
+import { LoginPage }      from './pages/LoginPage'
+import { MainMenuPage }   from './pages/MainMenuPage'
+import { FriendsPage }    from './pages/FriendsPage'
+import { RulebookPage }   from './pages/RulebookPage'
+import { HowToPlayPage }  from './pages/HowToPlayPage'
+import { ProfilePage }    from './pages/ProfilePage'
+import { ChallengePage }  from './pages/ChallengePage'
+import { PlayLobbyPage }  from './pages/PlayLobbyPage'
+import { GamePage }       from './pages/GamePage'
 import { SkeletonScreen } from './components/SkeletonScreen'
 
 export interface AuthState {
@@ -127,10 +129,11 @@ function AppInner() {
       />
       <Route
         path="/play"
-        element={
-          !auth ? <Navigate to="/login" replace /> :
-          <Navigate to="/" replace /> /* placeholder until PlayPage exists */
-        }
+        element={!auth ? <Navigate to="/login" replace /> : <PlayLobbyPage auth={auth} />}
+      />
+      <Route
+        path="/game/:gameId"
+        element={!auth ? <Navigate to="/login" replace /> : <GamePage auth={auth} />}
       />
 
       {/* Fallback */}

@@ -9,6 +9,7 @@ export default defineConfig({
       '/auth':   { target: 'http://localhost:8000', changeOrigin: true },
       '/social': { target: 'http://localhost:8000', changeOrigin: true },
       '/games':  { target: 'http://localhost:8000', changeOrigin: true },
+      '/cards':  { target: 'http://localhost:8000', changeOrigin: true },
       '/ws':     { target: 'ws://localhost:8000',   ws: true },
     },
   },
