@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react'
+import { apiUrl } from '../lib/api'
 import './LoginPage.css'
 
 /* ── Google Identity Services types ── */
@@ -43,7 +44,7 @@ function GoogleButton({ onLogin }: { onLogin: (t: string, id: number, u: string)
       callback: async ({ credential }) => {
         setErr('')
         try {
-          const res  = await fetch('/auth/google', {
+          const res  = await fetch(apiUrl('/auth/google'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id_token: credential }),
@@ -310,7 +311,7 @@ function LoginForm({
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/auth/login', {
+      const res = await fetch(apiUrl('/auth/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -388,7 +389,7 @@ function RegisterForm({
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/auth/register', {
+      const res = await fetch(apiUrl('/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, email, password }),

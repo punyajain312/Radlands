@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { apiUrl } from '../lib/api'
 import type { AuthState } from '../App'
 import {
   IconTrophy, IconTarget, IconFlame, IconBarChart,
@@ -120,8 +121,8 @@ export function ProfilePage({ auth, onBack }: { auth: AuthState; onBack: () => v
   useEffect(() => {
     const h = { Authorization: `Bearer ${auth.token}` }
     Promise.all([
-      fetch('/social/me/stats',   { headers: h }).then(r => r.ok ? r.json() : null),
-      fetch('/social/leaderboard',{ headers: h }).then(r => r.ok ? r.json() : []),
+      fetch(apiUrl('/social/me/stats'),   { headers: h }).then(r => r.ok ? r.json() : null),
+      fetch(apiUrl('/social/leaderboard'),{ headers: h }).then(r => r.ok ? r.json() : []),
     ]).then(([s, l]) => {
       if (s) setStats(s)
       setLboard(l ?? [])

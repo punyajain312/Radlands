@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: radlands-backend
+    runtime: python
+    rootDir: Radlands-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: starter          # starter plan required for WebSocket support
+    healthCheckPath: /
+    envVars:
+      - key: ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: radlands-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true   # Render auto-generates a secure random value
+      - key: GOOGLE_CLIENT_ID
+        sync: false           # set manually in Render dashboard
+      - key: ALLOWED_ORIGINS
+        sync: false           # set to your Vercel URL, e.g. https://radlands.vercel.app
+      - key: SQL_ECHO
+        value: false
+
+databases:
+  - name: radlands-db
+    plan: free
+    databaseName: radlands
+    user: radlands

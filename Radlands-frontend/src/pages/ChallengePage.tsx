@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { apiUrl } from '../lib/api'
 import type { AuthState } from '../App'
 import { IconZap, IconClock, IconSend, IconUser } from '../components/Icons'
 import './ChallengePage.css'
@@ -24,7 +25,7 @@ export function ChallengePage({ auth, target, onBack }: {
       if (scheduledAt) body.scheduled_at = new Date(scheduledAt).toISOString()
       if (message.trim()) body.message = message.trim()
 
-      const r = await fetch('/social/challenges', {
+      const r = await fetch(apiUrl('/social/challenges'), {
         method: 'POST',
         headers: { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

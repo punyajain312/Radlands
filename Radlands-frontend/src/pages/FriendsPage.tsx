@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react'
+import { apiUrl } from '../lib/api'
 import type { AuthState } from '../App'
 import {
   IconUser, IconUsers, IconSearch, IconPlus,
@@ -34,18 +35,18 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
   const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3500) }
 
   async function loadFriends() {
-    const r = await fetch('/social/friends', { headers })
+    const r = await fetch(apiUrl('/social/friends'), { headers })
     if (r.ok) setFriends(await r.json())
   }
   async function loadRequests() {
-    const r = await fetch('/social/friends/requests', { headers })
+    const r = await fetch(apiUrl('/social/friends/requests'), { headers })
     if (r.ok) {
       const d = await r.json()
       setIncoming(d.incoming); setOutgoing(d.outgoing)
     }
   }
   async function loadChallenges() {
-    const r = await fetch('/social/challenges', { headers })
+    const r = await fetch(apiUrl('/social/challenges'), { headers })
     if (r.ok) {
       const d = await r.json()
       setIncomingChal(d.incoming ?? []); setOutgoingChal(d.outgoing ?? [])
@@ -59,40 +60,40 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
     if (!searchQ.trim()) return
     setSearchLoading(true)
     try {
-      const r = await fetch(`/social/players/search?q=${encodeURIComponent(searchQ)}`, { headers })
+      const r = await fetch(apiUrl(`/social/players/search?q=${encodeURIComponent(searchQ)}`), { headers })
       if (r.ok) setSearchResults(await r.json())
     } finally { setSearchLoading(false) }
   }
 
   async function sendRequest(userId: number) {
-    const r = await fetch(`/social/friends/request/${userId}`, { method: 'POST', headers })
+    const r = await fetch(apiUrl(`/social/friends/request/${userId}`), { method: 'POST', headers })
     const d = await r.json()
     flash(r.ok ? 'Request sent!' : (d.detail ?? 'Error'))
     if (r.ok) loadRequests()
   }
 
   async function accept(id: number) {
-    await fetch(`/social/friends/accept/${id}`, { method: 'POST', headers })
+    await fetch(apiUrl(`/social/friends/accept/${id}`), { method: 'POST', headers })
     flash('Ally accepted!'); loadFriends(); loadRequests()
   }
 
   async function reject(id: number) {
-    await fetch(`/social/friends/reject/${id}`, { method: 'POST', headers })
+    await fetch(apiUrl(`/social/friends/reject/${id}`), { method: 'POST', headers })
     flash('Request declined.'); loadRequests()
   }
 
   async function acceptChallenge(id: number) {
-    await fetch(`/social/challenges/${id}/accept`, { method: 'POST', headers })
+    await fetch(apiUrl(`/social/challenges/${id}/accept`), { method: 'POST', headers })
     flash('Challenge accepted!'); loadChallenges()
   }
 
   async function declineChallenge(id: number) {
-    await fetch(`/social/challenges/${id}/decline`, { method: 'POST', headers })
+    await fetch(apiUrl(`/social/challenges/${id}/decline`), { method: 'POST', headers })
     flash('Challenge declined.'); loadChallenges()
   }
 
   async function cancelChallenge(id: number) {
-    await fetch(`/social/challenges/${id}`, { method: 'DELETE', headers })
+    await fetch(apiUrl(`/social/challenges/${id}`), { method: 'DELETE', headers })
     flash('Challenge cancelled.'); loadChallenges()
   }
 

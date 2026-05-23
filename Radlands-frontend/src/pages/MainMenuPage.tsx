@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { apiUrl } from '../lib/api'
 import type { AuthState, Page } from '../App'
 import {
   IconSword, IconBookOpen, IconUsers, IconHelpCircle,
@@ -77,7 +78,7 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
   const heroText = useTypewriter(HERO_PHRASES)
 
   useEffect(() => {
-    fetch('/social/me/stats', { headers: { Authorization: `Bearer ${auth.token}` } })
+    fetch(apiUrl('/social/me/stats'), { headers: { Authorization: `Bearer ${auth.token}` } })
       .then(r => r.ok ? r.json() : null).then(d => d && setStats(d)).catch(() => {})
   }, [auth.token])
 
@@ -163,56 +164,6 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
               <button className="mm-cta-secondary" onClick={() => onNavigate('profile')}>
                 VIEW PROFILE
               </button>
-            </div>
-          </div>
-
-          {/* Center: combat intel panel (large screens only) */}
-          <div className="mm-hero-center">
-            <div className="mm-center-inner">
-              <div className="mm-center-eyebrow">COMBAT INTEL</div>
-
-              <div className="mm-center-rank-wrap">
-                <div className="mm-center-rank-icon" style={{ borderColor: rank.color, boxShadow: `0 0 28px ${rank.color}35` }}>
-                  <IconShield size={48} color={rank.color} />
-                </div>
-                <div className="mm-center-rank-name" style={{ color: rank.color, textShadow: `0 0 16px ${rank.color}80` }}>
-                  {rank.name}
-                </div>
-                <div className="mm-center-rating">{rating} PTS</div>
-                <div className="mm-center-prog-track">
-                  <div className="mm-center-prog-fill" style={{ width: `${pct}%`, background: rank.color }} />
-                </div>
-                <div className="mm-center-prog-label">
-                  {rank.max !== Infinity ? `${rank.max - rating} pts to next rank` : 'MAX RANK ACHIEVED'}
-                </div>
-              </div>
-
-              <div className="mm-center-divider" />
-
-              <div className="mm-center-perf">
-                <div className="mm-perf-item">
-                  <span className="mm-perf-val" style={{ color: '#d4ff00' }}>{W}</span>
-                  <span className="mm-perf-label">WINS</span>
-                </div>
-                <div className="mm-perf-sep" />
-                <div className="mm-perf-item">
-                  <span className="mm-perf-val" style={{ color: '#ff6600' }}>{L}</span>
-                  <span className="mm-perf-label">LOSSES</span>
-                </div>
-                <div className="mm-perf-sep" />
-                <div className="mm-perf-item">
-                  <span className="mm-perf-val" style={{ color: '#00e5ff' }}>{P}</span>
-                  <span className="mm-perf-label">BATTLES</span>
-                </div>
-              </div>
-
-              <div className="mm-center-divider" />
-
-              <div className="mm-center-status">
-                <div className="mm-status-row"><span className="mm-sdot mm-sdot-green" />MATCHMAKING ONLINE</div>
-                <div className="mm-status-row"><span className="mm-sdot mm-sdot-green" />RATING TRACKING LIVE</div>
-                <div className="mm-status-row"><span className="mm-sdot mm-sdot-cyan" />COMBAT LOGS ACTIVE</div>
-              </div>
             </div>
           </div>
 
