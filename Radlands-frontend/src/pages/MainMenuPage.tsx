@@ -84,11 +84,8 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
 
   const W      = stats?.games_won    ?? 0
   const L      = stats?.games_lost   ?? 0
-  const P      = stats?.games_played ?? 0
-  const R      = stats?.win_rate     ?? 0
   const rating = stats?.rating       ?? 0
   const rank   = getRankFromRating(rating)
-  const pct    = rankProgress(rating)
 
   return (
     <div className="mm-root">
