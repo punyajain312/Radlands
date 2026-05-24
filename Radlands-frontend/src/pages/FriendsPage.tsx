@@ -1,5 +1,6 @@
-import { useState, useEffect, type FormEvent } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { apiUrl } from '../lib/api'
+import { toast } from '../components/Toast'
 import type { AuthState } from '../App'
 import {
   IconUser, IconUsers, IconSearch, IconPlus,
@@ -29,10 +30,16 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
   const [searchQ, setSearchQ]             = useState('')
   const [searchResults, setSearchResults] = useState<Player[]>([])
   const [searchLoading, setSearchLoading] = useState(false)
-  const [msg, setMsg]                     = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const headers = { Authorization: `Bearer ${auth.token}`, 'Content-Type': 'application/json' }
-  const flash = (m: string) => { setMsg(m); setTimeout(() => setMsg(''), 3500) }
+
+  async function apiPost(path: string, opts?: RequestInit) {
+    const r = await fetch(apiUrl(path), { method: 'POST', headers, ...opts })
+    const d = await r.json().catch(() => ({}))
+    if (!r.ok) toast(d.detail ?? 'Something went wrong', 'error')
+    return { ok: r.ok, data: d }
+  }
 
   async function loadFriends() {
     const r = await fetch(apiUrl('/social/friends'), { headers })
@@ -40,65 +47,78 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
   }
   async function loadRequests() {
     const r = await fetch(apiUrl('/social/friends/requests'), { headers })
-    if (r.ok) {
-      const d = await r.json()
-      setIncoming(d.incoming); setOutgoing(d.outgoing)
-    }
+    if (r.ok) { const d = await r.json(); setIncoming(d.incoming); setOutgoing(d.outgoing) }
   }
   async function loadChallenges() {
     const r = await fetch(apiUrl('/social/challenges'), { headers })
-    if (r.ok) {
-      const d = await r.json()
-      setIncomingChal(d.incoming ?? []); setOutgoingChal(d.outgoing ?? [])
-    }
+    if (r.ok) { const d = await r.json(); setIncomingChal(d.incoming ?? []); setOutgoingChal(d.outgoing ?? []) }
   }
 
   useEffect(() => { loadFriends(); loadRequests(); loadChallenges() }, [])
 
-  async function handleSearch(e: FormEvent) {
-    e.preventDefault()
-    if (!searchQ.trim()) return
-    setSearchLoading(true)
-    try {
-      const r = await fetch(apiUrl(`/social/players/search?q=${encodeURIComponent(searchQ)}`), { headers })
-      if (r.ok) setSearchResults(await r.json())
-    } finally { setSearchLoading(false) }
-  }
+  // ── Auto-search with debounce ──────────────────────────────────────────────
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (!searchQ.trim() || searchQ.trim().length < 2) {
+      setSearchResults([])
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearchLoading(true)
+      try {
+        const r = await fetch(apiUrl(`/social/players/search?q=${encodeURIComponent(searchQ)}`), { headers })
+        if (r.ok) setSearchResults(await r.json())
+        else { const d = await r.json(); toast(d.detail ?? 'Search failed', 'error') }
+      } finally { setSearchLoading(false) }
+    }, 300)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [searchQ])
 
   async function sendRequest(userId: number) {
-    const r = await fetch(apiUrl(`/social/friends/request/${userId}`), { method: 'POST', headers })
-    const d = await r.json()
-    flash(r.ok ? 'Request sent!' : (d.detail ?? 'Error'))
-    if (r.ok) loadRequests()
+    const { ok, data } = await apiPost(`/social/friends/request/${userId}`)
+    if (ok) { toast('Friend request sent!', 'success'); loadRequests() }
+    else if (data.detail) toast(data.detail, 'error')
+  }
+
+  async function cancelRequest(requestId: number) {
+    const r = await fetch(apiUrl(`/social/friends/request/${requestId}`), { method: 'DELETE', headers })
+    const d = await r.json().catch(() => ({}))
+    if (r.ok) { toast('Request cancelled', 'info'); loadRequests() }
+    else toast(d.detail ?? 'Failed to cancel', 'error')
   }
 
   async function accept(id: number) {
-    await fetch(apiUrl(`/social/friends/accept/${id}`), { method: 'POST', headers })
-    flash('Ally accepted!'); loadFriends(); loadRequests()
+    const { ok } = await apiPost(`/social/friends/accept/${id}`)
+    if (ok) { toast('Ally accepted!', 'success'); loadFriends(); loadRequests() }
   }
 
   async function reject(id: number) {
-    await fetch(apiUrl(`/social/friends/reject/${id}`), { method: 'POST', headers })
-    flash('Request declined.'); loadRequests()
+    const { ok } = await apiPost(`/social/friends/reject/${id}`)
+    if (ok) { toast('Request declined', 'info'); loadRequests() }
   }
 
   async function acceptChallenge(id: number) {
-    await fetch(apiUrl(`/social/challenges/${id}/accept`), { method: 'POST', headers })
-    flash('Challenge accepted!'); loadChallenges()
+    const { ok } = await apiPost(`/social/challenges/${id}/accept`)
+    if (ok) { toast('Challenge accepted!', 'success'); loadChallenges() }
   }
 
   async function declineChallenge(id: number) {
-    await fetch(apiUrl(`/social/challenges/${id}/decline`), { method: 'POST', headers })
-    flash('Challenge declined.'); loadChallenges()
+    const { ok } = await apiPost(`/social/challenges/${id}/decline`)
+    if (ok) { toast('Challenge declined', 'info'); loadChallenges() }
   }
 
   async function cancelChallenge(id: number) {
-    await fetch(apiUrl(`/social/challenges/${id}`), { method: 'DELETE', headers })
-    flash('Challenge cancelled.'); loadChallenges()
+    const r = await fetch(apiUrl(`/social/challenges/${id}`), { method: 'DELETE', headers })
+    const d = await r.json().catch(() => ({}))
+    if (r.ok) { toast('Challenge cancelled', 'info'); loadChallenges() }
+    else toast(d.detail ?? 'Failed to cancel', 'error')
   }
 
-  const pendingCount    = incoming.length
-  const challengeCount  = incomingChal.length
+  const pendingCount   = incoming.length
+  const challengeCount = incomingChal.length
+
+  const friendIds   = new Set(friends.map(f => f.user_id))
+  const outgoingMap = new Map(outgoing.map(r => [r.user_id, r.request_id]))
 
   function fmtDate(dt: string | null) {
     if (!dt) return 'Open challenge'
@@ -123,8 +143,6 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
         <span className="fp-bar-count">{friends.length} ALLIES</span>
       </header>
 
-      {msg && <div className="fp-flash">{msg}</div>}
-
       {/* Tabs */}
       <div className="fp-tabs">
         {([
@@ -145,7 +163,6 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
         ))}
       </div>
 
-      {/* Content */}
       <div className="fp-content">
 
         {/* FRIENDS TAB */}
@@ -159,21 +176,15 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
             )}
             {friends.map(f => (
               <div key={f.user_id} className="fp-card">
-                <div className="fp-card-icon">
-                  <IconUser size={18} color="#00e5ff" />
-                </div>
+                <div className="fp-card-icon"><IconUser size={18} color="#00e5ff" /></div>
                 <div className="fp-card-info">
                   <span className="fp-card-name">{f.username}</span>
                   <span className="fp-card-stats">{f.games_won}W · {f.games_played - f.games_won}L</span>
                 </div>
                 <div className="fp-card-actions">
                   <span className="fp-tag fp-tag-ally">ALLY</span>
-                  <button
-                    className="fp-btn-challenge"
-                    onClick={() => onChallenge({ userId: f.user_id, username: f.username })}
-                  >
-                    <IconZap size={13} color="#d4ff00" />
-                    CHALLENGE
+                  <button className="fp-btn-challenge" onClick={() => onChallenge({ userId: f.user_id, username: f.username })}>
+                    <IconZap size={13} color="#d4ff00" /> CHALLENGE
                   </button>
                 </div>
               </div>
@@ -186,25 +197,17 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
           <div className="fp-list">
             {incoming.length > 0 && (
               <>
-                <div className="fp-section-label">
-                  <IconInbox size={13} color="rgba(255,255,255,.35)" /> INCOMING
-                </div>
+                <div className="fp-section-label"><IconInbox size={13} color="rgba(255,255,255,.35)" /> INCOMING</div>
                 {incoming.map(r => (
                   <div key={r.request_id} className="fp-card fp-card-incoming">
-                    <div className="fp-card-icon">
-                      <IconUser size={18} color="#ff6600" />
-                    </div>
+                    <div className="fp-card-icon"><IconUser size={18} color="#ff6600" /></div>
                     <div className="fp-card-info">
                       <span className="fp-card-name">{r.username}</span>
                       <span className="fp-card-stats">Wants to ally with you</span>
                     </div>
                     <div className="fp-card-actions">
-                      <button className="fp-btn-accept" onClick={() => accept(r.request_id)}>
-                        <IconCheck size={13} /> ACCEPT
-                      </button>
-                      <button className="fp-btn-reject" onClick={() => reject(r.request_id)}>
-                        <IconX size={13} /> DECLINE
-                      </button>
+                      <button className="fp-btn-accept" onClick={() => accept(r.request_id)}><IconCheck size={13} /> ACCEPT</button>
+                      <button className="fp-btn-reject" onClick={() => reject(r.request_id)}><IconX size={13} /> DECLINE</button>
                     </div>
                   </div>
                 ))}
@@ -212,28 +215,24 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
             )}
             {outgoing.length > 0 && (
               <>
-                <div className="fp-section-label">
-                  <IconSend size={13} color="rgba(255,255,255,.35)" /> OUTGOING
-                </div>
+                <div className="fp-section-label"><IconSend size={13} color="rgba(255,255,255,.35)" /> OUTGOING</div>
                 {outgoing.map(r => (
                   <div key={r.request_id} className="fp-card">
-                    <div className="fp-card-icon">
-                      <IconUser size={18} color="rgba(255,255,255,.4)" />
-                    </div>
+                    <div className="fp-card-icon"><IconUser size={18} color="rgba(255,255,255,.4)" /></div>
                     <div className="fp-card-info">
                       <span className="fp-card-name">{r.username}</span>
                       <span className="fp-card-stats">Awaiting response</span>
                     </div>
-                    <span className="fp-tag fp-tag-pending">PENDING</span>
+                    <div className="fp-card-actions">
+                      <span className="fp-tag fp-tag-pending">PENDING</span>
+                      <button className="fp-btn-reject" onClick={() => cancelRequest(r.request_id)}><IconX size={13} /> CANCEL</button>
+                    </div>
                   </div>
                 ))}
               </>
             )}
             {incoming.length === 0 && outgoing.length === 0 && (
-              <div className="fp-empty">
-                <IconInbox size={28} color="rgba(255,255,255,.15)" />
-                <span>No pending requests.</span>
-              </div>
+              <div className="fp-empty"><IconInbox size={28} color="rgba(255,255,255,.15)" /><span>No pending requests.</span></div>
             )}
           </div>
         )}
@@ -243,29 +242,18 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
           <div className="fp-list">
             {incomingChal.length > 0 && (
               <>
-                <div className="fp-section-label">
-                  <IconInbox size={13} color="rgba(255,255,255,.35)" /> INCOMING CHALLENGES
-                </div>
+                <div className="fp-section-label"><IconInbox size={13} color="rgba(255,255,255,.35)" /> INCOMING CHALLENGES</div>
                 {incomingChal.map(c => (
                   <div key={c.challenge_id} className="fp-card fp-card-challenge">
-                    <div className="fp-card-icon">
-                      <IconZap size={18} color="#d4ff00" />
-                    </div>
+                    <div className="fp-card-icon"><IconZap size={18} color="#d4ff00" /></div>
                     <div className="fp-card-info">
                       <span className="fp-card-name">{c.username}</span>
-                      <span className="fp-card-stats">
-                        <IconClock size={11} color="rgba(255,255,255,.35)" />
-                        {fmtDate(c.scheduled_at)}
-                      </span>
+                      <span className="fp-card-stats"><IconClock size={11} color="rgba(255,255,255,.35)" />{fmtDate(c.scheduled_at)}</span>
                       {c.message && <span className="fp-card-msg">"{c.message}"</span>}
                     </div>
                     <div className="fp-card-actions">
-                      <button className="fp-btn-accept" onClick={() => acceptChallenge(c.challenge_id)}>
-                        <IconCheck size={13} /> ACCEPT
-                      </button>
-                      <button className="fp-btn-reject" onClick={() => declineChallenge(c.challenge_id)}>
-                        <IconX size={13} /> DECLINE
-                      </button>
+                      <button className="fp-btn-accept" onClick={() => acceptChallenge(c.challenge_id)}><IconCheck size={13} /> ACCEPT</button>
+                      <button className="fp-btn-reject" onClick={() => declineChallenge(c.challenge_id)}><IconX size={13} /> DECLINE</button>
                     </div>
                   </div>
                 ))}
@@ -273,36 +261,22 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
             )}
             {outgoingChal.length > 0 && (
               <>
-                <div className="fp-section-label">
-                  <IconSend size={13} color="rgba(255,255,255,.35)" /> OUTGOING CHALLENGES
-                </div>
+                <div className="fp-section-label"><IconSend size={13} color="rgba(255,255,255,.35)" /> OUTGOING CHALLENGES</div>
                 {outgoingChal.map(c => (
                   <div key={c.challenge_id} className="fp-card">
-                    <div className="fp-card-icon">
-                      <IconZap size={18} color="rgba(212,255,0,.4)" />
-                    </div>
+                    <div className="fp-card-icon"><IconZap size={18} color="rgba(212,255,0,.4)" /></div>
                     <div className="fp-card-info">
                       <span className="fp-card-name">{c.username}</span>
-                      <span className="fp-card-stats">
-                        <IconClock size={11} color="rgba(255,255,255,.35)" />
-                        {fmtDate(c.scheduled_at)}
-                      </span>
+                      <span className="fp-card-stats"><IconClock size={11} color="rgba(255,255,255,.35)" />{fmtDate(c.scheduled_at)}</span>
                       {c.message && <span className="fp-card-msg">"{c.message}"</span>}
                     </div>
-                    <div className="fp-card-actions">
-                      <button className="fp-btn-reject" onClick={() => cancelChallenge(c.challenge_id)}>
-                        <IconX size={13} /> CANCEL
-                      </button>
-                    </div>
+                    <button className="fp-btn-reject" onClick={() => cancelChallenge(c.challenge_id)}><IconX size={13} /> CANCEL</button>
                   </div>
                 ))}
               </>
             )}
             {incomingChal.length === 0 && outgoingChal.length === 0 && (
-              <div className="fp-empty">
-                <IconZap size={28} color="rgba(255,255,255,.15)" />
-                <span>No pending challenges. Challenge an ally from the Friends tab.</span>
-              </div>
+              <div className="fp-empty"><IconZap size={28} color="rgba(255,255,255,.15)" /><span>No pending challenges. Challenge an ally from the Friends tab.</span></div>
             )}
           </div>
         )}
@@ -310,43 +284,60 @@ export function FriendsPage({ auth, onBack, onChallenge }: {
         {/* SEARCH TAB */}
         {tab === 'search' && (
           <div className="fp-search-panel">
-            <form className="fp-search-form" onSubmit={handleSearch}>
+            <div className="fp-search-form">
               <div className="fp-search-input-wrap">
                 <IconSearch size={16} color="rgba(255,255,255,.3)" className="fp-search-icon" />
                 <input
                   className="fp-search-input"
                   type="text"
-                  placeholder="Enter warrior callsign…"
+                  placeholder="Type warrior callsign to search…"
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
-                  minLength={2}
-                  required
+                  autoFocus
                 />
+                {searchLoading && <span style={{ color: '#9b6dff', fontSize: 11 }}>…</span>}
               </div>
-              <button className="fp-search-btn" type="submit" disabled={searchLoading}>
-                {searchLoading ? '…' : 'SEARCH'}
-              </button>
-            </form>
+            </div>
             <div className="fp-list">
-              {searchResults.map(p => (
-                <div key={p.user_id} className="fp-card">
-                  <div className="fp-card-icon">
-                    <IconUser size={18} color="#b700ff" />
+              {searchResults.filter(p => p.user_id !== auth.userId).map(p => {
+                const isFriend   = friendIds.has(p.user_id)
+                const reqId      = outgoingMap.get(p.user_id)
+                const isRequested = reqId !== undefined
+
+                return (
+                  <div key={p.user_id} className="fp-card">
+                    <div className="fp-card-icon"><IconUser size={18} color="#b700ff" /></div>
+                    <div className="fp-card-info">
+                      <span className="fp-card-name">{p.username}</span>
+                      <span className="fp-card-stats">{p.games_won}W · {p.games_played}P</span>
+                    </div>
+                    <div className="fp-card-actions">
+                      {isFriend ? (
+                        <span className="fp-tag fp-tag-ally">ALLY</span>
+                      ) : isRequested ? (
+                        <>
+                          <span className="fp-tag fp-tag-pending">REQUESTED</span>
+                          <button className="fp-btn-reject" onClick={() => cancelRequest(reqId!)}>
+                            <IconX size={13} /> CANCEL
+                          </button>
+                        </>
+                      ) : (
+                        <button className="fp-btn-add" onClick={() => sendRequest(p.user_id)}>
+                          <IconPlus size={13} /> ADD
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="fp-card-info">
-                    <span className="fp-card-name">{p.username}</span>
-                    <span className="fp-card-stats">{p.games_won}W · {p.games_played}P</span>
-                  </div>
-                  <button className="fp-btn-add" onClick={() => sendRequest(p.user_id)}>
-                    <IconPlus size={13} /> ADD
-                  </button>
-                </div>
-              ))}
-              {searchResults.length === 0 && searchQ && !searchLoading && (
+                )
+              })}
+              {searchQ.trim().length >= 2 && !searchLoading && searchResults.length === 0 && (
                 <div className="fp-empty">
                   <IconSearch size={24} color="rgba(255,255,255,.15)" />
                   <span>No warriors found matching "{searchQ}"</span>
                 </div>
+              )}
+              {searchQ.trim().length < 2 && searchQ.trim().length > 0 && (
+                <div className="fp-empty"><span>Type at least 2 characters to search</span></div>
               )}
             </div>
           </div>

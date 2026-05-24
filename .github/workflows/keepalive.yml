@@ -12,8 +12,19 @@ jobs:
     steps:
       - name: Ping backend
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.RENDER_BACKEND_URL }}/")
+          URL="${{ secrets.RENDER_BACKEND_URL }}"
+          if [ -z "$URL" ]; then
+            echo "RENDER_BACKEND_URL secret is not set — skipping ping"
+            exit 0
+          fi
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --max-time 30 --connect-timeout 10 \
+            "${URL}/health" 2>/dev/null) || STATUS="curl_error"
           echo "Response status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
+          if [ "$STATUS" = "curl_error" ]; then
+            echo "Warning: curl failed (backend may be starting up)"
+          elif [ "$STATUS" != "200" ]; then
             echo "Warning: backend returned $STATUS"
+          else
+            echo "Backend is alive"
           fi

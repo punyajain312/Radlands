@@ -60,9 +60,18 @@ def execute_effect(
     elif etype == "ready":
         _exec_ready(state, caller_target)
 
+    elif etype == "raid":
+        _exec_raid(state, acting_player_id, opponent_player_id)
+
+    elif etype == "gain_punk":
+        _exec_gain_punk(state, caller_target, acting_player_id)
+
+    elif etype == "flip_punk":
+        _exec_flip_punk(state, caller_target, acting_player_id)
+
     elif etype in (
         "conditional_effect", "choice", "peek", "copy_ability",
-        "modify_state", "gain_punk", "raid", "rearrange", "draw_select",
+        "modify_state", "rearrange", "draw_select",
         "move", "conditional_play_for_free", "optional_reorder",
         "draw_per_destroyed", "destroy_all_but_one",
     ):
@@ -91,14 +100,15 @@ def is_camp_protected(state: dict, player_id: int, camp_index: int) -> bool:
 
 def cleanup_dead_people(state: dict) -> None:
     """
-    Sweep all columns.  People with damage >= 2 are removed and sent to the
-    player's personal discard pile.  Must be called after any damage pass.
+    Sweep all columns. Punks die at 1 damage; regular people die at 2.
+    Removed cards go to the player's personal discard pile.
     """
     for player_id, player in state["players"].items():
         for col_idx in range(len(player["columns"])):
             alive = []
             for person in player["columns"][col_idx]:
-                if person.get("damage", 0) >= 2:
+                threshold = 1 if person.get("is_punk") else 2
+                if person.get("damage", 0) >= threshold:
                     player["discard"].append(person["card_id"])
                 else:
                     alive.append(person)
@@ -431,6 +441,83 @@ def _exec_return(state, effect, caller_target, acting_player_id, opponent_player
         if pos_idx < len(col):
             removed = col.pop(pos_idx)
             player["hand"].append(removed["card_id"])
+
+
+def _exec_gain_punk(state, caller_target, acting_player_id):
+    """Draw the top card of the deck and place it face-down as a punk in a column."""
+    player = state["players"][str(acting_player_id)]
+
+    if not state["deck"]:
+        return  # Nothing to draw
+
+    card_id = state["deck"].pop(0)
+
+    # Try to use the caller's column hint, else first column with room
+    target_col = None
+    if caller_target and caller_target.get("type") == "person":
+        target_col = caller_target.get("column")
+
+    placed = False
+    if target_col is not None and len(player["columns"][target_col]) < 2:
+        player["columns"][target_col].append(
+            {"card_id": card_id, "damage": 0, "ready": False, "is_punk": True}
+        )
+        placed = True
+
+    if not placed:
+        for col in player["columns"]:
+            if len(col) < 2:
+                col.append({"card_id": card_id, "damage": 0, "ready": False, "is_punk": True})
+                placed = True
+                break
+
+    if not placed:
+        state["discard"].append(card_id)
+
+
+def _exec_flip_punk(state, caller_target, acting_player_id):
+    """Flip a face-down punk face-up, making it a regular person."""
+    player = state["players"][str(acting_player_id)]
+
+    if caller_target and caller_target.get("type") == "person":
+        col_idx = caller_target.get("column", 0)
+        pos_idx = caller_target.get("position", 0)
+        col = player["columns"][col_idx]
+        if pos_idx < len(col) and col[pos_idx].get("is_punk"):
+            col[pos_idx]["is_punk"] = False
+            return
+
+    # Fall back to first punk found
+    for col in player["columns"]:
+        for person in col:
+            if person.get("is_punk"):
+                person["is_punk"] = False
+                return
+
+
+def _exec_raid(state, acting_player_id, opponent_player_id):
+    """Place or advance the Raiders event. When it resolves, damage one opponent camp."""
+    player = state["players"][str(acting_player_id)]
+    raiders_turns = player.get("raiders_turns")
+
+    if raiders_turns is None:
+        # Raiders not in queue — place at ②★ (2 turns away)
+        player["raiders_in_play"] = False
+        player["raiders_turns"] = 2
+    elif raiders_turns <= 1:
+        # Already at ①★ — resolve immediately
+        player["raiders_in_play"] = True
+        player["raiders_turns"] = None
+        opp = state["players"][str(opponent_player_id)]
+        for camp in opp["camps"]:
+            if not camp.get("destroyed"):
+                camp["damage"] = camp.get("damage", 0) + 1
+                if camp["damage"] >= 2:
+                    camp["destroyed"] = True
+                break
+    else:
+        # Advance from ②★ to ①★
+        player["raiders_turns"] = 1
 
 
 def _exec_ready(state, caller_target):

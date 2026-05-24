@@ -48,3 +48,8 @@ app.include_router(social_router)
 @app.get("/")
 def root():
     return {"message": "Radlands Backend Running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

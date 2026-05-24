@@ -63,7 +63,10 @@ def initialize_game_state(db: Session, game) -> GameState:
                     for c in player1_camps
                 ],
                 "columns": [[], [], []],
-                "events": [None, None, None]
+                "events": [None, None, None],
+                "raiders_in_play": True,
+                "raiders_turns": None,
+                "water_silo_in_play": True,
             },
             str(game.player2_id): {
                 "hand": player2_hand,
@@ -74,7 +77,10 @@ def initialize_game_state(db: Session, game) -> GameState:
                     for c in player2_camps
                 ],
                 "columns": [[], [], []],
-                "events": [None, None, None]
+                "events": [None, None, None],
+                "raiders_in_play": True,
+                "raiders_turns": None,
+                "water_silo_in_play": True,
             }
         }
     }
@@ -142,6 +148,25 @@ def advance_events(state: dict, player_id: int, db) -> list[dict]:
             fired.append({"slot": slot_idx, "card_id": slot["card_id"]})
             player["events"][slot_idx] = None
             # Caller must execute play_effect from card_def if desired
+
+    # Handle Raiders countdown
+    raiders_turns = player.get("raiders_turns")
+    if raiders_turns is not None:
+        player["raiders_turns"] = raiders_turns - 1
+        if player["raiders_turns"] <= 0:
+            player["raiders_in_play"] = True
+            player["raiders_turns"] = None
+            # Damage one opponent camp (Raiders ignores camp protection)
+            pids = [int(pid) for pid in state["players"].keys()]
+            opp_id = next(pid for pid in pids if pid != player_id)
+            opp = state["players"][str(opp_id)]
+            for camp in opp["camps"]:
+                if not camp.get("destroyed"):
+                    camp["damage"] = camp.get("damage", 0) + 1
+                    if camp["damage"] >= 2:
+                        camp["destroyed"] = True
+                    fired.append({"slot": -1, "card_id": "__raiders__", "resolved": True})
+                    break
 
     return fired
 

@@ -7,6 +7,7 @@ from app.models.game import Game
 from app.models.player import Player
 from app.models.game_state import GameState
 from app.models.card import Card
+from app.models.challenge import GameChallenge
 from app.core.auth_deps import get_current_player_id
 from app.core.game_initializer import (
     initialize_game_state,
@@ -23,6 +24,7 @@ from app.schemas.game import (
     ActivateCampRequest,
     JunkCardRequest,
     PlayEventRequest,
+    RepositionPersonRequest,
 )
 
 router = APIRouter()
@@ -368,7 +370,8 @@ async def play_person(
         raise HTTPException(status_code=400, detail="Not enough water")
 
     col_idx = request.column_index
-    if len(player["columns"][col_idx]) >= 2:
+    col = player["columns"][col_idx]
+    if len(col) >= 2:
         raise HTTPException(status_code=400, detail="Column already has 2 people")
 
     # Deduct cost and place
@@ -377,13 +380,20 @@ async def play_person(
     _record_card_play(db, current_player_id, request.card_id)
 
     person_state = {"card_id": card.id, "damage": 0, "ready": False}
-    player["columns"][col_idx].append(person_state)
+
+    # position_index 0 = front row; if a card is already there, push it to back
+    if request.position_index == 0 and len(col) == 1:
+        col.insert(0, person_state)
+        position_idx = 0
+    else:
+        col.append(person_state)
+        position_idx = len(col) - 1
+
     state["turn_context"]["people_played_this_turn"] += 1
 
     # Fire enter_effect if any (non-optional only)
     enter = card.data.get("enter_effect")
     if enter and not enter.get("optional", False):
-        position_idx = len(player["columns"][col_idx]) - 1
         self_target = {
             "type": "person",
             "player_id": current_player_id,
@@ -578,6 +588,15 @@ async def junk_card(
     if request.card_id not in player["hand"]:
         raise HTTPException(status_code=400, detail="Card not in your hand")
 
+    # Special: Water Silo — returns to play area and grants +1 water instead of going to discard
+    if request.card_id == "__water_silo__":
+        player["hand"].remove(request.card_id)
+        player["water_silo_in_play"] = True
+        player["water"] += 1
+        _save_state(db, game, game_state, state)
+        await _broadcast(game, state)
+        return {"message": "Water Silo returned to play area (+1 water)", "state": state}
+
     card = db.query(Card).filter(Card.id == request.card_id).first()
     if not card:
         raise HTTPException(status_code=404, detail="Card not found")
@@ -656,3 +675,108 @@ async def play_event(
     await _broadcast(game, state)
 
     return {"message": "Event queued", "state": state}
+
+
+# ---------------------------------------------------------------------------
+# Take Water Silo into hand
+# ---------------------------------------------------------------------------
+
+@router.post("/games/take-water-silo/{game_id}")
+async def take_water_silo(
+    game_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    game, game_state = _get_active_game(game_id, db)
+    _require_turn(game, current_player_id)
+
+    state = game_state.state_json
+    player = state["players"][str(current_player_id)]
+
+    if not player.get("water_silo_in_play", True):
+        raise HTTPException(status_code=400, detail="Water Silo is already in your hand")
+
+    if player["water"] < 1:
+        raise HTTPException(status_code=400, detail="Need 1 water to take Water Silo")
+
+    player["water"] -= 1
+    player["water_silo_in_play"] = False
+    player["hand"].append("__water_silo__")
+
+    _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
+    return {"message": "Water Silo taken into hand", "state": state}
+
+
+# ---------------------------------------------------------------------------
+# Reposition person (swap front/back rows within a column)
+# ---------------------------------------------------------------------------
+
+@router.post("/games/reposition-person/{game_id}")
+async def reposition_person(
+    game_id: int,
+    request: RepositionPersonRequest,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    game, game_state = _get_active_game(game_id, db)
+    _require_turn(game, current_player_id)
+
+    state = game_state.state_json
+    player = state["players"][str(current_player_id)]
+
+    col = player["columns"][request.column_index]
+    if len(col) < 2:
+        raise HTTPException(status_code=400, detail="Need 2 people in this column to swap positions")
+
+    col[0], col[1] = col[1], col[0]
+
+    _save_state(db, game, game_state, state)
+    await _broadcast(game, state)
+    return {"message": "Positions swapped", "state": state}
+
+
+# ---------------------------------------------------------------------------
+# Resign
+# ---------------------------------------------------------------------------
+
+@router.post("/games/resign/{game_id}")
+async def resign_game(
+    game_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    game = db.query(Game).filter(Game.id == game_id).first()
+    if not game:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    if current_player_id not in (game.player1_id, game.player2_id):
+        raise HTTPException(status_code=403, detail="You are not in this game")
+
+    if game.status == "finished":
+        raise HTTPException(status_code=400, detail="Game already finished")
+
+    winner_id = game.player2_id if current_player_id == game.player1_id else game.player1_id
+    game.status = "finished"
+    game.winner_id = winner_id
+
+    _update_player_stats(db, game)
+
+    # Delete the challenge between these two players so it clears from the lobby
+    db.query(GameChallenge).filter(
+        (
+            (GameChallenge.challenger_id == game.player1_id) &
+            (GameChallenge.challenged_id == game.player2_id)
+        ) | (
+            (GameChallenge.challenger_id == game.player2_id) &
+            (GameChallenge.challenged_id == game.player1_id)
+        )
+    ).delete(synchronize_session=False)
+
+    game_state = db.query(GameState).filter(GameState.game_id == game_id).first()
+    state = game_state.state_json if game_state else {}
+
+    db.commit()
+    await _broadcast(game, state)
+
+    return {"message": "Resigned", "winner_id": winner_id}

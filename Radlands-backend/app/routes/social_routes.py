@@ -209,6 +209,24 @@ def reject_friend_request(
     return {"message": "Friend request rejected"}
 
 
+@router.delete("/friends/request/{request_id}")
+def cancel_friend_request(
+    request_id: int,
+    current_player_id: int = Depends(get_current_player_id),
+    db: Session = Depends(get_db),
+):
+    req = db.query(FriendRequest).filter(
+        FriendRequest.id == request_id,
+        FriendRequest.sender_id == current_player_id,
+        FriendRequest.status == "pending",
+    ).first()
+    if not req:
+        raise HTTPException(status_code=404, detail="Friend request not found")
+    db.delete(req)
+    db.commit()
+    return {"message": "Friend request cancelled"}
+
+
 # ─── Rank definitions (static) ───────────────────────────────────────────────
 
 RANK_TIERS = [

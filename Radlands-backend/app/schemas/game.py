@@ -10,6 +10,7 @@ class CreateGameRequest(BaseModel):
 class PlayPersonRequest(BaseModel):
     card_id: str
     column_index: int
+    position_index: Optional[int] = None  # 0=front row, 1=back row; None=auto (appends)
 
     @field_validator("column_index")
     @classmethod
@@ -69,4 +70,16 @@ class PlayEventRequest(BaseModel):
     def valid_slot(cls, v: int) -> int:
         if v not in (0, 1, 2):
             raise ValueError("queue_slot must be 0, 1, or 2")
+        return v
+
+
+class RepositionPersonRequest(BaseModel):
+    """Swap the front and back people in a column (drag-and-drop row swap)."""
+    column_index: int
+
+    @field_validator("column_index")
+    @classmethod
+    def valid_column(cls, v: int) -> int:
+        if v not in (0, 1, 2):
+            raise ValueError("column_index must be 0, 1, or 2")
         return v

@@ -13,6 +13,7 @@ import { ChallengePage }  from './pages/ChallengePage'
 import { PlayLobbyPage }  from './pages/PlayLobbyPage'
 import { GamePage }       from './pages/GamePage'
 import { SkeletonScreen } from './components/SkeletonScreen'
+import { Toaster } from './components/Toast'
 
 export interface AuthState {
   token: string
@@ -163,6 +164,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppInner />
+      <Toaster />
     </BrowserRouter>
   )
 }

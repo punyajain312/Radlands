@@ -1,28 +1,67 @@
-import { useState, type FormEvent } from 'react'
+import { useState } from 'react'
 import { apiUrl } from '../lib/api'
+import { toast } from '../components/Toast'
 import type { AuthState } from '../App'
 import { IconZap, IconClock, IconSend, IconUser } from '../components/Icons'
 import './ChallengePage.css'
 
 interface ChallengeTarget { userId: number; username: string }
 
+type ScheduleOption = 'instant' | '5min' | '10min' | '30min' | '1hour' | 'custom'
+
+const SCHEDULE_OPTIONS: { value: ScheduleOption; label: string; minutes?: number }[] = [
+  { value: 'instant', label: 'INSTANT' },
+  { value: '5min',    label: 'IN 5 MIN',  minutes: 5 },
+  { value: '10min',   label: 'IN 10 MIN', minutes: 10 },
+  { value: '30min',   label: 'IN 30 MIN', minutes: 30 },
+  { value: '1hour',   label: 'IN 1 HOUR', minutes: 60 },
+  { value: 'custom',  label: 'CUSTOM' },
+]
+
 export function ChallengePage({ auth, target, onBack }: {
   auth: AuthState
   target: ChallengeTarget
   onBack: () => void
 }) {
-  const [scheduledAt, setScheduledAt] = useState('')
-  const [message, setMessage]         = useState('')
-  const [sending, setSending]         = useState(false)
-  const [sent, setSent]               = useState(false)
-  const [error, setError]             = useState('')
+  const [schedule, setSchedule] = useState<ScheduleOption>('instant')
+  const [customDt, setCustomDt] = useState('')
+  const [message, setMessage]   = useState('')
+  const [sending, setSending]   = useState(false)
+  const [sent, setSent]         = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault()
-    setSending(true); setError('')
+  const minDt = new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)
+
+  function getScheduledAt(): string | null {
+    if (schedule === 'instant') return null
+    if (schedule === 'custom') return customDt ? new Date(customDt).toISOString() : null
+    const opt = SCHEDULE_OPTIONS.find(o => o.value === schedule)
+    if (!opt?.minutes) return null
+    return new Date(Date.now() + opt.minutes * 60 * 1000).toISOString()
+  }
+
+  function scheduleLabel(): string {
+    if (schedule === 'instant') return 'Game starts as soon as they accept'
+    if (schedule === 'custom' && customDt) {
+      return `Scheduled for ${new Date(customDt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`
+    }
+    const opt = SCHEDULE_OPTIONS.find(o => o.value === schedule)
+    if (opt?.minutes) {
+      const t = new Date(Date.now() + opt.minutes * 60 * 1000)
+      return `~${t.toLocaleString([], { timeStyle: 'short' })}`
+    }
+    return ''
+  }
+
+  async function handleSend() {
+    if (schedule === 'custom' && !customDt) {
+      toast('Please pick a custom date and time', 'error')
+      return
+    }
+    setSending(true)
     try {
       const body: Record<string, unknown> = { challenged_id: target.userId }
-      if (scheduledAt) body.scheduled_at = new Date(scheduledAt).toISOString()
+      const scheduledAt = getScheduledAt()
+      if (scheduledAt) body.scheduled_at = scheduledAt
       if (message.trim()) body.message = message.trim()
 
       const r = await fetch(apiUrl('/social/challenges'), {
@@ -34,17 +73,14 @@ export function ChallengePage({ auth, target, onBack }: {
       if (r.ok) {
         setSent(true)
       } else {
-        setError(d.detail ?? 'Failed to send challenge.')
+        toast(d.detail ?? 'Failed to send challenge', 'error')
       }
     } catch {
-      setError('Network error. Please try again.')
+      toast('Network error. Please try again.', 'error')
     } finally {
       setSending(false)
     }
   }
-
-  /* ── Min datetime = now + 5 minutes */
-  const minDt = new Date(Date.now() + 5 * 60 * 1000).toISOString().slice(0, 16)
 
   return (
     <div className="cp-root">
@@ -66,51 +102,58 @@ export function ChallengePage({ auth, target, onBack }: {
       <div className="cp-body">
         {sent ? (
           <div className="cp-success">
-            <div className="cp-success-icon">
-              <IconZap size={40} color="#d4ff00" />
-            </div>
+            <div className="cp-success-icon"><IconZap size={40} color="#d4ff00" /></div>
             <div className="cp-success-title">CHALLENGE DISPATCHED</div>
             <p className="cp-success-sub">
-              {target.username.toUpperCase()} has been challenged to battle.
-              {scheduledAt && ` Game scheduled for ${new Date(scheduledAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}.`}
+              {target.username.toUpperCase()} has been challenged.
+              {schedule !== 'instant' && ` ${scheduleLabel()}.`}
+              {' '}Game starts when they accept.
             </p>
             <button className="cp-btn-back" onClick={onBack}>RETURN TO ALLIES</button>
           </div>
         ) : (
-          <form className="cp-form" onSubmit={handleSubmit}>
-            {/* Target info */}
+          <div className="cp-form">
+            {/* Target */}
             <div className="cp-target-card">
-              <div className="cp-target-icon">
-                <IconUser size={22} color="#d4ff00" />
-              </div>
+              <div className="cp-target-icon"><IconUser size={22} color="#d4ff00" /></div>
               <div className="cp-target-info">
                 <span className="cp-target-label">CHALLENGING OPERATIVE</span>
                 <span className="cp-target-name">{target.username.toUpperCase()}</span>
               </div>
-              <div className="cp-target-badge">
-                <IconZap size={14} color="#d4ff00" />
-                CHALLENGE
-              </div>
+              <div className="cp-target-badge"><IconZap size={14} color="#d4ff00" />CHALLENGE</div>
             </div>
 
-            {/* Schedule picker */}
+            {/* Schedule */}
             <div className="cp-field">
               <label className="cp-field-label">
                 <IconClock size={14} color="rgba(255,255,255,.4)" />
-                SCHEDULE DATE &amp; TIME
-                <span className="cp-field-note">(optional — leave blank for open challenge)</span>
+                WHEN TO BATTLE
               </label>
-              <input
-                className="cp-datetime"
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={e => setScheduledAt(e.target.value)}
-                min={minDt}
-              />
-              {scheduledAt && (
+              <div className="cp-schedule-grid">
+                {SCHEDULE_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`cp-schedule-btn ${schedule === opt.value ? 'active' : ''}`}
+                    onClick={() => setSchedule(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {schedule === 'custom' && (
+                <input
+                  className="cp-datetime"
+                  type="datetime-local"
+                  value={customDt}
+                  onChange={e => setCustomDt(e.target.value)}
+                  min={minDt}
+                />
+              )}
+              {scheduleLabel() && (
                 <div className="cp-dt-preview">
                   <IconClock size={12} color="#00e5ff" />
-                  Scheduled for {new Date(scheduledAt).toLocaleString([], { dateStyle: 'long', timeStyle: 'short' })}
+                  {scheduleLabel()}
                 </div>
               )}
             </div>
@@ -120,7 +163,7 @@ export function ChallengePage({ auth, target, onBack }: {
               <label className="cp-field-label">
                 <IconSend size={14} color="rgba(255,255,255,.4)" />
                 BATTLE CRY
-                <span className="cp-field-note">(optional message)</span>
+                <span className="cp-field-note">(optional)</span>
               </label>
               <textarea
                 className="cp-message"
@@ -133,17 +176,14 @@ export function ChallengePage({ auth, target, onBack }: {
               <div className="cp-msg-count">{message.length}/200</div>
             </div>
 
-            {error && <div className="cp-error">{error}</div>}
-
-            {/* Actions */}
             <div className="cp-actions">
               <button type="button" className="cp-btn-cancel" onClick={onBack}>CANCEL</button>
-              <button type="submit" className="cp-btn-send" disabled={sending}>
+              <button type="button" className="cp-btn-send" disabled={sending} onClick={handleSend}>
                 <IconZap size={15} color="#08001a" />
                 {sending ? 'SENDING…' : 'SEND CHALLENGE'}
               </button>
             </div>
-          </form>
+          </div>
         )}
       </div>
     </div>
