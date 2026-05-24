@@ -11,6 +11,7 @@ class Player(Base):
     password = Column(String, nullable=True)
     google_id = Column(String, unique=True, nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    username_changed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Stats
     games_played = Column(Integer, default=0, nullable=False, server_default="0")

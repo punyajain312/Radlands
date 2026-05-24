@@ -317,7 +317,14 @@ function LoginForm({
         body: JSON.stringify({ username, password }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.detail ?? 'Login failed'); return }
+      if (!res.ok) {
+        const detail = data.detail
+        const msg = Array.isArray(detail)
+          ? (detail as Array<{ msg: string }>).map(e => e.msg.replace(/^Value error, /, '')).join(' · ')
+          : (typeof detail === 'string' ? detail : 'Login failed')
+        setError(msg)
+        return
+      }
       onLogin(data.access_token, data.user_id, data.username)
     } catch {
       setError('Cannot reach server — is the backend running?')
@@ -395,7 +402,14 @@ function RegisterForm({
         body: JSON.stringify({ username, email, password }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.detail ?? 'Registration failed'); return }
+      if (!res.ok) {
+        const detail = data.detail
+        const msg = Array.isArray(detail)
+          ? (detail as Array<{ msg: string }>).map(e => e.msg.replace(/^Value error, /, '')).join(' · ')
+          : (typeof detail === 'string' ? detail : 'Registration failed')
+        setError(msg)
+        return
+      }
       onLogin(data.access_token, data.user_id, data.username)
     } catch {
       setError('Cannot reach server — is the backend running?')

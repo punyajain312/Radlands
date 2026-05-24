@@ -408,9 +408,12 @@ def accept_challenge(
     db.flush()
     db.refresh(game)
 
-    initialize_game_state(db, game)
+    try:
+        initialize_game_state(db, game)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to initialize game: {exc}")
 
-    db.commit()
     return {"message": "Challenge accepted", "game_id": game.id}
 
 

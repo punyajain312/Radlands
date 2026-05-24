@@ -35,7 +35,7 @@
 
 /* LEFT COLUMN */
 .pp-left {
-  width: 58%; flex-shrink: 0; overflow-y: auto;
+  width: 42%; flex-shrink: 0; overflow-y: auto;
   padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;
   border-right: 1px solid rgba(255,255,255,.07);
   scrollbar-width: thin; scrollbar-color: rgba(255,0,128,.2) transparent;
@@ -45,12 +45,58 @@
 
 /* RIGHT COLUMN */
 .pp-right {
-  flex: 1; overflow-y: auto;
+  width: 32%; flex-shrink: 0; overflow-y: auto;
   padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;
+  border-right: 1px solid rgba(255,255,255,.07);
   scrollbar-width: thin; scrollbar-color: rgba(183,0,255,.2) transparent;
 }
 .pp-right::-webkit-scrollbar { width: 4px; }
 .pp-right::-webkit-scrollbar-thumb { background: rgba(183,0,255,.2); border-radius: 2px; }
+
+/* SETTINGS COLUMN */
+.pp-settings {
+  flex: 1; overflow-y: auto;
+  padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;
+  scrollbar-width: thin; scrollbar-color: rgba(0,229,255,.2) transparent;
+}
+.pp-settings::-webkit-scrollbar { width: 4px; }
+.pp-settings::-webkit-scrollbar-thumb { background: rgba(0,229,255,.2); border-radius: 2px; }
+
+.pp-settings-block {
+  background: rgba(0,229,255,.03); border: 1px solid rgba(0,229,255,.15);
+  padding: 18px; display: flex; flex-direction: column; gap: 10px;
+}
+.pp-settings-block-title {
+  font-size: .58rem; font-weight: 900; letter-spacing: .3em; color: #00e5ff;
+}
+.pp-settings-form {
+  display: flex; gap: 8px; align-items: center;
+}
+.pp-settings-form-col {
+  flex-direction: column; align-items: stretch;
+}
+.pp-settings-input {
+  flex: 1; background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.25);
+  color: #fff; padding: 8px 12px; font-family: inherit; font-size: .75rem;
+  letter-spacing: .05em; outline: none;
+}
+.pp-settings-input::placeholder { color: rgba(255,255,255,.25); }
+.pp-settings-input:focus { border-color: #00e5ff; box-shadow: 0 0 8px rgba(0,229,255,.2); }
+.pp-settings-btn {
+  background: rgba(0,229,255,.12); border: 1px solid rgba(0,229,255,.4);
+  color: #00e5ff; padding: 8px 18px; font-family: inherit; font-size: .65rem;
+  font-weight: 900; letter-spacing: .2em; cursor: pointer; flex-shrink: 0;
+  transition: background .15s;
+}
+.pp-settings-btn:hover:not(:disabled) { background: rgba(0,229,255,.22); }
+.pp-settings-btn:disabled { opacity: .45; cursor: default; }
+.pp-settings-locked {
+  font-size: .7rem; color: rgba(255,255,255,.35); letter-spacing: .08em;
+  padding: 10px 0;
+}
+.pp-settings-hint {
+  font-size: .58rem; color: rgba(255,255,255,.25); letter-spacing: .1em;
+}
 
 /* Shared section head */
 .pp-section-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,.07); }
