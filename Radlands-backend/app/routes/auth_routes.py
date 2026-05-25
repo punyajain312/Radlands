@@ -51,7 +51,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db), _: None = 
     db.refresh(user)
 
     return TokenResponse(
-        access_token=create_access_token(user.id),
+        access_token=create_access_token(user.id, user.token_version or 0),
         user_id=user.id,
         username=user.username,
     )
@@ -64,8 +64,11 @@ def login(request: LoginRequest, db: Session = Depends(get_db), _: None = Depend
     if not user or not verify_password(request.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    user.token_version = (user.token_version or 0) + 1
+    db.commit()
+
     return TokenResponse(
-        access_token=create_access_token(user.id),
+        access_token=create_access_token(user.id, user.token_version),
         user_id=user.id,
         username=user.username,
     )
@@ -241,11 +244,12 @@ def google_login(request: GoogleLoginRequest, db: Session = Depends(get_db)):
             )
             db.add(user)
 
+    user.token_version = (user.token_version or 0) + 1
     db.commit()
     db.refresh(user)
 
     return TokenResponse(
-        access_token=create_access_token(user.id),
+        access_token=create_access_token(user.id, user.token_version),
         user_id=user.id,
         username=user.username,
     )

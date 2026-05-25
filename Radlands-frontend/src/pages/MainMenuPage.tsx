@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { apiUrl } from '../lib/api'
 import type { AuthState, Page } from '../App'
 import {
@@ -75,7 +75,20 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
   auth: AuthState; onLogout: () => void; onNavigate: (p: Page) => void
 }) {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [dropOpen, setDropOpen] = useState(false)
+  const dropRef = useRef<HTMLDivElement>(null)
   const heroText = useTypewriter(HERO_PHRASES)
+
+  const closeDropdown = useCallback((e: MouseEvent) => {
+    if (dropRef.current && !dropRef.current.contains(e.target as Node)) {
+      setDropOpen(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (dropOpen) document.addEventListener('mousedown', closeDropdown)
+    return () => document.removeEventListener('mousedown', closeDropdown)
+  }, [dropOpen, closeDropdown])
 
   useEffect(() => {
     fetch(apiUrl('/social/me/stats'), { headers: { Authorization: `Bearer ${auth.token}` } })
@@ -114,9 +127,24 @@ export function MainMenuPage({ auth, onLogout, onNavigate }: {
             <span className="mm-bar-stat-val" style={{ color: rank.color }}>{rank.name}</span>
           </div>
         </div>
-        <div className="mm-bar-right">
-          <span className="mm-username">{auth.username}</span>
-          <button className="mm-exit" onClick={onLogout}>EXIT</button>
+        <div className="mm-bar-right" ref={dropRef}>
+          <button className="mm-user-btn" onClick={() => setDropOpen(o => !o)}>
+            <span className="mm-username">{auth.username}</span>
+            <svg className={`mm-caret${dropOpen ? ' mm-caret-open' : ''}`} width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+              <path d="M5 7L1 3h8L5 7z" />
+            </svg>
+          </button>
+          {dropOpen && (
+            <div className="mm-dropdown">
+              <button className="mm-drop-item" onClick={() => { setDropOpen(false); onNavigate('settings') }}>
+                SETTINGS
+              </button>
+              <div className="mm-drop-sep" />
+              <button className="mm-drop-item mm-drop-logout" onClick={onLogout}>
+                LOGOUT
+              </button>
+            </div>
+          )}
         </div>
       </header>
 

@@ -9,6 +9,7 @@ import { FriendsPage }    from './pages/FriendsPage'
 import { RulebookPage }   from './pages/RulebookPage'
 import { HowToPlayPage }  from './pages/HowToPlayPage'
 import { ProfilePage }    from './pages/ProfilePage'
+import { SettingsPage }   from './pages/SettingsPage'
 import { ChallengePage }  from './pages/ChallengePage'
 import { PlayLobbyPage }  from './pages/PlayLobbyPage'
 import { GamePage }       from './pages/GamePage'
@@ -21,7 +22,7 @@ export interface AuthState {
   username: string
 }
 
-export type Page = 'menu' | 'friends' | 'rulebook' | 'howtoplay' | 'profile' | 'play' | 'challenge'
+export type Page = 'menu' | 'friends' | 'rulebook' | 'howtoplay' | 'profile' | 'settings' | 'play' | 'challenge'
 
 export interface ChallengeTarget { userId: number; username: string }
 
@@ -31,6 +32,7 @@ const PAGE_ROUTES: Record<Page, string> = {
   rulebook:  '/rulebook',
   howtoplay: '/howtoplay',
   profile:   '/profile',
+  settings:  '/settings',
   play:      '/play',
   challenge: '/challenge',
 }
@@ -67,6 +69,11 @@ function AppInner() {
     navigate('/login', { replace: true })
   }
 
+  function handleUsernameChange(newUsername: string) {
+    localStorage.setItem('radlands_username', newUsername)
+    setAuth(prev => prev ? { ...prev, username: newUsername } : prev)
+  }
+
   function handleNavigate(p: Page) {
     navigate(PAGE_ROUTES[p])
   }
@@ -91,6 +98,13 @@ function AppInner() {
         element={
           !auth ? <Navigate to="/login" replace /> :
           <MainMenuPage auth={auth} onLogout={handleLogout} onNavigate={handleNavigate} />
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          !auth ? <Navigate to="/login" replace /> :
+          <SettingsPage auth={auth} onBack={() => navigate(-1)} onUsernameChange={handleUsernameChange} />
         }
       />
       <Route

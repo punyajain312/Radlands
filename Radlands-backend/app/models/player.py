@@ -21,3 +21,6 @@ class Player(Base):
 
     # Rating — starts at 0 (SURVIVOR tier), ELO-style deltas, floor 0
     rating = Column(Integer, default=0, nullable=False, server_default="0")
+
+    # Incremented on each new login — invalidates all prior tokens
+    token_version = Column(Integer, default=0, nullable=False, server_default="0")

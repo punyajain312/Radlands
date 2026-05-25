@@ -6,7 +6,6 @@ import {
   IconShield, IconStar, IconUser, IconAward, IconX,
 } from '../components/Icons'
 import { RANKS, getRankFromRating, rankProgress } from '../constants/ranks'
-import { toast } from '../components/Toast'
 import './ProfilePage.css'
 
 interface Stats {
@@ -112,154 +111,12 @@ function RankModal({ currentRating, onClose }: { currentRating: number; onClose:
   )
 }
 
-/* ─────────────────────────────── SETTINGS PANEL ─────────────────────────── */
-function SettingsPanel({ auth, onUsernameChange }: { auth: AuthState; onUsernameChange: (u: string) => void }) {
-  const [canChange, setCanChange]       = useState(true)
-  const [daysLeft, setDaysLeft]         = useState(0)
-  const [newUsername, setNewUsername]   = useState('')
-  const [unameLoading, setUnameLoading] = useState(false)
-
-  const [curPass, setCurPass]         = useState('')
-  const [newPass, setNewPass]         = useState('')
-  const [confPass, setConfPass]       = useState('')
-  const [passLoading, setPassLoading] = useState(false)
-
-  useEffect(() => {
-    fetch(apiUrl('/auth/me/username-change-status'), {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d) { setCanChange(d.can_change); setDaysLeft(d.days_until_change) }
-      })
-  }, [auth.token])
-
-  async function handleUsernameChange(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newUsername.trim()) return
-    setUnameLoading(true)
-    try {
-      const res = await fetch(apiUrl('/auth/me/username'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
-        body: JSON.stringify({ new_username: newUsername.trim() }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        const detail = data.detail
-        toast(typeof detail === 'string' ? detail : 'Username change failed', 'error')
-      } else {
-        toast('Callsign updated!', 'success')
-        setNewUsername('')
-        setCanChange(false)
-        setDaysLeft(7)
-        onUsernameChange(data.username)
-      }
-    } catch { toast('Cannot reach server', 'error') }
-    finally { setUnameLoading(false) }
-  }
-
-  async function handlePasswordChange(e: React.FormEvent) {
-    e.preventDefault()
-    if (newPass !== confPass) { toast('New passwords do not match', 'error'); return }
-    setPassLoading(true)
-    try {
-      const res = await fetch(apiUrl('/auth/me/password'), {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
-        body: JSON.stringify({ current_password: curPass, new_password: newPass }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        const detail = data.detail
-        toast(typeof detail === 'string' ? detail : 'Password change failed', 'error')
-      } else {
-        toast('Security protocol updated!', 'success')
-        setCurPass(''); setNewPass(''); setConfPass('')
-      }
-    } catch { toast('Cannot reach server', 'error') }
-    finally { setPassLoading(false) }
-  }
-
-  return (
-    <div className="pp-settings">
-      <div className="pp-section-head">
-        <span className="pp-sec-title">OPERATIVE SETTINGS</span>
-        <span className="pp-sec-sub">Manage credentials</span>
-      </div>
-
-      {/* Username change */}
-      <div className="pp-settings-block">
-        <div className="pp-settings-block-title">CHANGE CALLSIGN</div>
-        {!canChange ? (
-          <div className="pp-settings-locked">
-            Callsign locked — available in {daysLeft} day{daysLeft !== 1 ? 's' : ''}
-          </div>
-        ) : (
-          <form className="pp-settings-form" onSubmit={handleUsernameChange}>
-            <input
-              className="pp-settings-input"
-              type="text"
-              placeholder="New callsign"
-              value={newUsername}
-              onChange={e => setNewUsername(e.target.value)}
-              minLength={3}
-              required
-            />
-            <button className="pp-settings-btn" type="submit" disabled={unameLoading}>
-              {unameLoading ? 'UPDATING…' : 'UPDATE'}
-            </button>
-          </form>
-        )}
-        <div className="pp-settings-hint">Callsign can only be changed once per week</div>
-      </div>
-
-      {/* Password change */}
-      <div className="pp-settings-block">
-        <div className="pp-settings-block-title">CHANGE SECURITY PROTOCOL</div>
-        <form className="pp-settings-form pp-settings-form-col" onSubmit={handlePasswordChange}>
-          <input
-            className="pp-settings-input"
-            type="password"
-            placeholder="Current protocol"
-            value={curPass}
-            onChange={e => setCurPass(e.target.value)}
-            required
-          />
-          <input
-            className="pp-settings-input"
-            type="password"
-            placeholder="New protocol (8+ chars, UPPER, number)"
-            value={newPass}
-            onChange={e => setNewPass(e.target.value)}
-            minLength={8}
-            required
-          />
-          <input
-            className="pp-settings-input"
-            type="password"
-            placeholder="Confirm new protocol"
-            value={confPass}
-            onChange={e => setConfPass(e.target.value)}
-            required
-          />
-          <button className="pp-settings-btn" type="submit" disabled={passLoading}>
-            {passLoading ? 'UPDATING…' : 'UPDATE PROTOCOL'}
-          </button>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-
 /* ─────────────────────────────── MAIN PAGE ─────────────────────────────── */
 export function ProfilePage({ auth, onBack }: { auth: AuthState; onBack: () => void }) {
   const [stats, setStats]         = useState<Stats | null>(null)
   const [leaderboard, setLboard]  = useState<LeaderEntry[]>([])
   const [loading, setLoading]     = useState(true)
   const [showRanks, setShowRanks] = useState(false)
-  const [currentUsername, setCurrentUsername] = useState(auth.username)
 
   useEffect(() => {
     const h = { Authorization: `Bearer ${auth.token}` }
@@ -306,7 +163,7 @@ export function ProfilePage({ auth, onBack }: { auth: AuthState; onBack: () => v
           <span className="pp-bar-eyebrow">OPERATIVE DOSSIER</span>
           <span className="pp-bar-title">COMBAT PROFILE</span>
         </div>
-        <span className="pp-bar-tag">{currentUsername.toUpperCase()}</span>
+        <span className="pp-bar-tag">{auth.username.toUpperCase()}</span>
       </header>
 
       <div className="pp-body">
@@ -495,8 +352,6 @@ export function ProfilePage({ auth, onBack }: { auth: AuthState; onBack: () => v
           )}
         </div>
 
-        {/* SETTINGS PANEL */}
-        <SettingsPanel auth={auth} onUsernameChange={u => setCurrentUsername(u)} />
       </div>
     </div>
   )

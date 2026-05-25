@@ -46,14 +46,38 @@
 .mm-bar-stat-val   { font-size: .82rem; font-weight: 900; letter-spacing: .1em; color: #fff; }
 .mm-bar-sep { width: 1px; height: 28px; background: rgba(255,255,255,.1); }
 
-.mm-bar-right { display: flex; align-items: center; gap: 16px; margin-left: auto; }
+.mm-bar-right { position: relative; display: flex; align-items: center; margin-left: auto; }
 .mm-username { font-size: .72rem; letter-spacing: .18em; color: #00e5ff; text-shadow: 0 0 10px #00e5ff; }
-.mm-exit {
-  background: transparent; border: 1px solid rgba(255,0,128,.4);
-  color: #ff0080; font-family: inherit; font-size: .68rem;
-  letter-spacing: .2em; padding: 6px 16px; cursor: pointer; transition: all .18s;
+
+.mm-user-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid rgba(0,229,255,.25);
+  color: #00e5ff; font-family: inherit; font-size: .72rem;
+  letter-spacing: .18em; padding: 6px 14px; cursor: pointer;
+  transition: all .18s;
 }
-.mm-exit:hover { background: rgba(255,0,128,.1); box-shadow: 0 0 12px rgba(255,0,128,.3); }
+.mm-user-btn:hover { background: rgba(0,229,255,.08); box-shadow: 0 0 10px rgba(0,229,255,.2); }
+
+.mm-caret { transition: transform .18s; color: rgba(0,229,255,.6); }
+.mm-caret-open { transform: rotate(180deg); }
+
+.mm-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 100;
+  min-width: 160px;
+  background: rgba(6,0,15,.95); border: 1px solid rgba(0,229,255,.25);
+  backdrop-filter: blur(16px);
+  display: flex; flex-direction: column;
+}
+.mm-drop-item {
+  background: transparent; border: none;
+  color: rgba(255,255,255,.75); font-family: inherit; font-size: .68rem;
+  letter-spacing: .2em; padding: 12px 18px; cursor: pointer;
+  text-align: left; transition: all .15s;
+}
+.mm-drop-item:hover { background: rgba(0,229,255,.08); color: #00e5ff; }
+.mm-drop-sep { height: 1px; background: rgba(255,255,255,.08); margin: 0 10px; }
+.mm-drop-logout { color: rgba(255,0,128,.7); }
+.mm-drop-logout:hover { background: rgba(255,0,128,.08); color: #ff0080; }
 
 /* ═══════════════ BODY ═══════════════ */
 .mm-body {
