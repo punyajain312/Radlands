@@ -37,20 +37,20 @@ def get_my_stats(
 
     if counts:
         fav_id = max(counts, key=lambda k: counts[k])
-        fav_card = db.query(Card).filter(Card.id == int(fav_id)).first()
+        fav_card = db.query(Card).filter(Card.id == fav_id).first()
         favorite_card = {
-            "id": int(fav_id),
-            "name": fav_card.name if fav_card else f"Card #{fav_id}",
+            "id": fav_id,
+            "name": fav_card.name if fav_card else fav_id,
             "type": fav_card.type if fav_card else "unknown",
             "count": counts[fav_id],
         }
 
         if len(counts) > 1:
             least_id = min(counts, key=lambda k: counts[k])
-            least_card = db.query(Card).filter(Card.id == int(least_id)).first()
+            least_card = db.query(Card).filter(Card.id == least_id).first()
             least_used_card = {
-                "id": int(least_id),
-                "name": least_card.name if least_card else f"Card #{least_id}",
+                "id": least_id,
+                "name": least_card.name if least_card else least_id,
                 "type": least_card.type if least_card else "unknown",
                 "count": counts[least_id],
             }
