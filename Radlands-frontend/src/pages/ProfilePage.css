@@ -35,7 +35,7 @@
 
 /* LEFT COLUMN */
 .pp-left {
-  width: 42%; flex-shrink: 0; overflow-y: auto;
+  flex: 1; overflow-y: auto;
   padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;
   border-right: 1px solid rgba(255,255,255,.07);
   scrollbar-width: thin; scrollbar-color: rgba(255,0,128,.2) transparent;
@@ -45,9 +45,8 @@
 
 /* RIGHT COLUMN */
 .pp-right {
-  width: 32%; flex-shrink: 0; overflow-y: auto;
+  flex: 1; overflow-y: auto;
   padding: 24px 28px; display: flex; flex-direction: column; gap: 18px;
-  border-right: 1px solid rgba(255,255,255,.07);
   scrollbar-width: thin; scrollbar-color: rgba(183,0,255,.2) transparent;
 }
 .pp-right::-webkit-scrollbar { width: 4px; }
