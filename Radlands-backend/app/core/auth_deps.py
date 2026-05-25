@@ -20,13 +20,13 @@ def get_current_player_id(
     user_id = payload["user_id"]
     token_version = payload.get("token_version", 0)
 
-    player = db.query(Player).filter(Player.id == user_id).first()
-    if not player:
+    row = db.query(Player.id, Player.token_version).filter(Player.id == user_id).first()
+    if not row:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User no longer exists",
         )
-    if (player.token_version or 0) != token_version:
+    if (row.token_version or 0) != token_version:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session invalidated — please log in again",
